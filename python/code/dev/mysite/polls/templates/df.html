@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% load static humanize %}
+
+{% block main %}
+    <h1>自己紹介a</h1>
+        {{ products | safe }}
+        <h1>{{ username }}さん、ようこそ！Shunのホームページです。</h1>
+{% endblock %}
