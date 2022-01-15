@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+
+{% block main %}
+<h1>ヘッダーとインデックスも渡す</h1>
+	<table>
+		<thead>
+			<tr>{%- for i in df_columns %}<th>{{ i|e }}</th>{%- endfor %}</tr>
+		</thead>
+		<tbody>
+			{%- for i in df_values %}
+			<tr><th>{{ df_index[loop.index0]|e }}</th>{% for j in i %}<td>{{ j|e }}</td>{% endfor %}</tr>
+			{%- endfor %}
+		</tbody>
+	</table>
+{% endblock %}
+
+
+
+
