@@ -4,9 +4,8 @@
     <a href="/tickers_create" role="botton">新規作成</a>
     {% for post in posts %}
     <article>
-        <p>{{ post.title }}</p>
+        <p>{{ post.stock_name }}</p>
         <p>{{ post.created_at }}</p>
-        <p>{{ post.body }}</p>
         </article>
     {% endfor %}
 {% endblock %}

@@ -1,8 +1,10 @@
 {% extends "base.html" %}
-
-
 {% block main %}
-    <h1>Webアプリ初心者のFlaskチュートリアル</h1>
+    <h1>新規登録</h1>
+    <form method="POST">
+        <label for="stock_name">stock_name</label>
+        <input type="text" name="stock_name">
+        <input type="submit">
 {% endblock %}
 
 
