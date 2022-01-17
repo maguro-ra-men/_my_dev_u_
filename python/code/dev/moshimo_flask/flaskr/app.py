@@ -6,18 +6,12 @@ from sqlalchemy import create_engine
 from datetime import datetime
 import pytz #for use time zone
 
+#pj用moduleのpython pathを通す。（os.path.dirname～～ではcdまでしか取れずNGだった）
+import sys
+sys.path.append("C:\\Users\\kazu\\_my_dev_u_\\python\\code\\dev\\moshimo_flask\\flaskr")
 
-"""
-from flaskr import app
-if __name__ == '__main__':
-  app.run()
-"""
-# セッション変数の取得
-#from setting import session
-# Userモデルの取得
-#from Tickers import *
-from flaskr.models.tickers import Tickers
-#tickers = Tickers.query(Tckers.stock_name).all()
+from db import *
+from models.tickers import Tickers
 
 
 
@@ -58,7 +52,7 @@ tickers
 def tickers():
     if request.method == 'GET':
         #post = Post.query.all()
-        posts = Tickers.query(Tckers.stock_name).all()
+        posts = Tickers.query(Tickers.stock_name).all()
     return render_template ('tickers.html', posts=posts)
 
 @app.route("/tickers_create",methods=['GET','POST'])
@@ -74,13 +68,3 @@ def tickers_create():
         return render_template ('tickers_create.html')
 
 
-import pandas as pd
-pd.read_sql('SELECT * FROM stock_prices;', ENGINE) #確認
-
-from setting import session
-from flaskr.models.tickers import Tickers
-
-tickers = tickers()
-tickers.stock_name = '平成太郎'
-session.add(tickers)
-session.commit()
