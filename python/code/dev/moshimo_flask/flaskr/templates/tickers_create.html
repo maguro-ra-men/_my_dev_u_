@@ -1,10 +1,54 @@
 {% extends "base.html" %}
 {% block main %}
-    <h1>新規登録</h1>
+    <h1>Ticker 新規登録</h1>
     <form method="POST">
-        <label for="stock_name">stock_name</label>
-        <input type="text" name="stock_name">
-        <input type="submit">
+    <table border=0>
+        <tr>
+            <td>
+                <label for="stock_name">stock_name (ex:SOXL / Direxion デイリー 半導体株 ブル 3倍 ETF)</label>
+                </td> <td>
+                <input type="text" name="stock_name">
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <label for="ticker">ticker (ex:SOXL)</label>
+            </td> <td>
+                <input type="text" name="ticker">
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <label for="purchase_format">purchase_format (ex:ETF) </label>
+            </td> <td>
+                <input type="text" name="purchase_format">
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <label for="currency">currency (ex:USD,JPY)通貨</label>
+            </td> <td>
+                <input type="text" name="currency">
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <label for="exchange">exchange (ex:NYSE Arca) 上場取引所</label>
+            </td> <td>
+                <input type="text" name="exchange">
+            </td>
+        </tr>
+        <tr>
+            <td>
+            </td> <td>
+                <input type="submit">
+            </td>
+        </tr>
+    </table>
+    <br><br><br>
+    <a href="https://member.rakuten-sec.co.jp/app/info_us_prc_search.do;BV_SessionID=4E7677EE79328CC53CA26FD7DB44B3D7.f003e262?eventType=search">楽天証券で確認</a> 
+    <br><br>    
+    <img src="images/example_ticker_soxl.png">
 {% endblock %}
 
 

@@ -11,29 +11,7 @@ https://engineer-lifestyle-blog.com/code/python/sqlalchemy-usage-for-mysql-sqlit
 from sqlalchemy import create_engine,Column, Integer, String
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-#import pymysql
- 
-# エンジンの定義
-engine = create_engine('mysql+pymysql://kazu:11cRIudj9aSi@localhost:50000/dev_moshimo?charset=utf8', echo=True)
- 
-# sqlalchemyでデータベースのテーブルを扱うための宣言
-#Base = sqlalchemy.ext.declarative.declarative_base()
-Base = declarative_base()
- 
-# テーブルのフィールドを定義
-class Student(Base):
-    __tablename__ = 'students'
-    id = Column(
-        Integer, primary_key=True, autoincrement=True
-    )
-    name = Column(String(30))
- 
-# データベースにテーブルを作成
-Base.metadata.create_all(bind=engine)
- 
-# データベースに接続するためのセッションを準備
-Session = sessionmaker(bind=engine)
-session = Session()
+
  
 
 

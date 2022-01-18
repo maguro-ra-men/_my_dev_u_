@@ -5,7 +5,10 @@
     {% for post in posts %}
     <article>
         <p>{{ post.stock_name }}</p>
-        <p>{{ post.created_at }}</p>
+        <p>{{ post.ticker }}</p>
+        <p>{{ post.purchase_format }}</p>
+        <p>{{ post.currency }}</p>
+        <p>{{ post.exchange }}</p>
         </article>
     {% endfor %}
 {% endblock %}

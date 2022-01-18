@@ -11,8 +11,13 @@ database = 'mysql+pymysql://%s:%s@%s:%s/%s?charset=utf8' % (
     "50000",
     "dev_moshimo",
 )
-engine = create_engine('%s' % (database), encoding="utf-8",echo=True)
+#engine = create_engine('%s' % (database), encoding="utf-8",echo=True)
 
+engine = create_engine(
+    database,
+    encoding="utf-8",
+    echo=True
+    )
 # sqlalchemyでデータベースのテーブルを扱うための宣言
 Base = declarative_base()
  
@@ -27,7 +32,7 @@ session = scoped_session(
     )
 )   
 
-Session = sessionmaker(bind=engine)
+#Session = sessionmaker(bind=engine) #テストしたapp_bではナシで成功していたのでOFFってみる
 Base.query = session.query_property()
 #session = Session() #参考サイトの順番では2行上である。大丈夫か？appからだとエラーになるのでコメント化した
 

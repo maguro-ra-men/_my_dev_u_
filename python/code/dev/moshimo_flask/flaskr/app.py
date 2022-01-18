@@ -1,12 +1,12 @@
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from flask import render_template, request, redirect
-
-from jinja2 import Template, Environment, FileSystemLoader #不要？
-from flask_sqlalchemy import SQLAlchemy #flask 使う？
-from sqlalchemy import create_engine #不要？
-
-from datetime import datetime
+import datetime
 import pytz #for use time zone
+
+#from jinja2 import Template, Environment, FileSystemLoader #不要？
+#from flask_sqlalchemy import SQLAlchemy #flask 使う？
+#from sqlalchemy import create_engine #不要？
+
 
 #pj用moduleのpython pathを通す。（os.path.dirname～～ではcdまでしか取れずNGだった）
 import sys
@@ -17,12 +17,12 @@ from db import *
 from models.tickers import Tickers
 
 #app.py---------------------------------
-app = Flask(__name__)
+app = Flask(__name__, static_folder='./templates/images') 
+app.config['JSON_AS_ASCII'] = False
 
 @app.route("/")
-def hello_world():
+def index():
     return render_template ('index.html')
-
 
 
 """
@@ -54,20 +54,30 @@ tickers
 def tickers():
     if request.method == 'GET':
         #post = Post.query.all()
-        posts = session.query(Tickers.stock_name).all()
+        posts = session.query(Tickers).all()
     return render_template ('tickers.html', posts=posts)
 
 @app.route("/tickers_create",methods=['GET','POST'])
 def tickers_create():
     if request.method == 'POST':
         stock_name = request.form.get('stock_name')
-        post = Tickers(stock_name=stock_name)
+        ticker = request.form.get('ticker')
+        purchase_format = request.form.get('purchase_format')
+        currency = request.form.get('currency')
+        exchange = request.form.get('exchange')
+        #created_time = datetime.datetime.now(pytz.timezone('Asia/Tokyo'))
+        #created_time = "datetime.datetime.now()"
+        post = Tickers(stock_name=stock_name,ticker=ticker,
+                        purchase_format=purchase_format,currency=currency,
+                        exchange=exchange)
 
         session.add(post)
         session.commit()
         return redirect('/tickers')
     else:
         return render_template ('tickers_create.html')
+
+
 
 
 
