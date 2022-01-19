@@ -17,13 +17,25 @@ from db import *
 from models.tickers import Tickers
 
 #app.py---------------------------------
-app = Flask(__name__, static_folder='./templates/images') 
+app = Flask(__name__, 
+            static_url_path='/static',
+            static_folder='static',
+            template_folder='templates'
+            ) 
 app.config['JSON_AS_ASCII'] = False
 
 @app.route("/")
 def index():
     return render_template ('index.html')
 
+
+@app.route("/favicon.ico")
+def favicon():
+    return app.send_static_file("favicon.ico")
+
+@app.route("/about")
+def about():
+    return render_template ('about.html')
 
 """
 dfを渡す
@@ -83,8 +95,13 @@ def tickers_create():
 
 
 """
+開発用
+session.remove() #エラーの値が変更されない場合実行
+
 通ったクエリサンプル
 #select
+session.query(Tickers).all()
+
 users = session.query(Student.name, Student.id).all()
 for user in users:
     print(user.name,user.id)
