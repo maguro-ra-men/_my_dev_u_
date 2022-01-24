@@ -12,8 +12,8 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, TextAreaField, ValidationError
 
 from db import *
-from models.test_class import Tickers
-from models.forms import RegistrationForm
+from models.ztest_class import Tickers
+from models.ztest_forms import RegistrationForm
 
 
 app = Flask(__name__)
@@ -32,8 +32,6 @@ def test_create():
         purchase_format = request.form.get('purchase_format')
         currency = request.form.get('currency')
         exchange = request.form.get('exchange')
-        #created_time = datetime.datetime.now(pytz.timezone('Asia/Tokyo'))
-        #created_time = "datetime.datetime.now()"
         post = Tickers(stock_name=stock_name,ticker=ticker,
                         purchase_format=purchase_format,currency=currency,
                         exchange=exchange)

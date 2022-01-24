@@ -15,6 +15,7 @@ sys.path.append("C:\\Users\\kazu\\_my_dev_u_\\python\\code\\dev\\moshimo_flask\\
 #my module
 from db import *
 from models.tickers import Tickers
+from models.forms import Tickers_Form
 
 #app.py---------------------------------
 app = Flask(__name__, 
@@ -23,6 +24,7 @@ app = Flask(__name__,
             template_folder='templates'
             ) 
 app.config['JSON_AS_ASCII'] = False
+app.config["SECRET_KEY"] = "sample1201" #form追加の際追加　不要？
 
 @app.route("/")
 def index():
@@ -71,14 +73,13 @@ def tickers():
 
 @app.route("/tickers_create",methods=['GET','POST'])
 def tickers_create():
-    if request.method == 'POST':
+    form = Tickers_Form(request.form)
+    if request.method == 'POST' and form.validate():
         stock_name = request.form.get('stock_name')
         ticker = request.form.get('ticker')
         purchase_format = request.form.get('purchase_format')
         currency = request.form.get('currency')
         exchange = request.form.get('exchange')
-        #created_time = datetime.datetime.now(pytz.timezone('Asia/Tokyo'))
-        #created_time = "datetime.datetime.now()"
         post = Tickers(stock_name=stock_name,ticker=ticker,
                         purchase_format=purchase_format,currency=currency,
                         exchange=exchange)
@@ -87,7 +88,7 @@ def tickers_create():
         session.commit()
         return redirect('/tickers')
     else:
-        return render_template ('tickers_create.html')
+        return render_template ('tickers_create.html', form=form)
 
 
 
