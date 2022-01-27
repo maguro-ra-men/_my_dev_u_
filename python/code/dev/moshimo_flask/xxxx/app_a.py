@@ -13,7 +13,7 @@ app = Flask(__name__)
 
 @app.teardown_appcontext
 def shutdown_session(exception=None):
-    #db_session.remove()
+    session.remove()
     if exception and session.is_active:
         db_session.rollback()
         print(1)

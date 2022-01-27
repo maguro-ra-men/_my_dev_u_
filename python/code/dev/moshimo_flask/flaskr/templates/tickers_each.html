@@ -1,17 +1,30 @@
 {% extends "base.html" %}
 {% block main %}
-    <h1>Ticker 新規登録</h1>
+    <h1>Ticker 編集</h1>
 
     {% from "_formhelpers.html" import render_field %}
-    <form method="POST" action="/tickers_create">
+    <form  class="form-group" method="POST">
     <dl>
+    <div class="form-group">
     {{ render_field(form.ticker) }}
+    </div>
+    <div class="form-group">
     {{ render_field(form.stock_name) }}
+    </div>
+    <div class="form-group">
     {{ render_field(form.purchase_format) }}
+    </div>
+    <div class="form-group">
     {{ render_field(form.currency) }}
+    </div>
+    <div class="form-group">
     {{ render_field(form.exchange) }}
+    </div>
     </dl>
+    <div class="form-group">
+    </div>
     <p><input type=submit value=Register class="uk-button-primary">
+        <a class="uk-button-danger" href="{{ url_for('delete_tickers', id=id)}}">Delete</a>
     </form>
 
     <br>

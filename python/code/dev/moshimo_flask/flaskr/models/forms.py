@@ -1,10 +1,11 @@
 from wtforms import (Form, BooleanField, StringField, PasswordField, 
-    validators,SelectField,ValidationError)
+    validators,SelectField,ValidationError,Label)
+from wtforms.validators import *
 
 class Tickers_Form(Form):
     #form & validate
     ticker = StringField('ticker (ex:SOXL)', [validators.DataRequired(), 
-        validators.Regexp('^[0-9a-z]+$', message='半角英数のみ入力可能')])
+        validators.Regexp('^[0-9a-zA-Z]+$', message='半角英数のみ入力可能')])
     stock_name = StringField('stock_name (ex:SOXL / Direxion デイリー 半導体株 ブル 3倍 ETF)', 
         [validators.DataRequired()])
     purchase_format = SelectField('purchase_format (ex:ETF)', 
@@ -14,6 +15,9 @@ class Tickers_Form(Form):
     exchange = SelectField('exchange (ex:NYSE Arca) 上場取引所', 
         choices=[(''),('NYSE Arca')], validate_choice = True)
     
+    def __init__(self, *args, **kwargs):
+        super(Tickers_Form, self).__init__(*args, **kwargs)
+
     #selectfieldのみ入力必須の関数不可なので↓でvalidate
     def validate_purchase_format(form, purchase_format): 
         if purchase_format.data == "": 

@@ -1,5 +1,7 @@
+#from distutils.dir_util import create_tree #不要？
+from unicodedata import name
 from flask import Flask, request, jsonify
-from flask import render_template, request, redirect
+from flask import render_template, redirect, url_for, request
 import datetime
 import pytz #for use time zone
 
@@ -17,14 +19,50 @@ from db import *
 from models.tickers import Tickers
 from models.forms import Tickers_Form
 
+#loging
+import logging
+logger = logging.getLogger(__name__)
+filehandler = logging.FileHandler('test.log')
+streamhandler = logging.StreamHandler()
+logger.addHandler(filehandler)
+logger.addHandler(streamhandler)
+logger.setLevel(logging.DEBUG)
+formatter = logging.Formatter('[%(asctime)s][%(levelname)s][%(message)s][%(filename)s]')
+streamhandler.setFormatter(formatter)
+filehandler.setFormatter(formatter)
+
+logger.debug('testlog_debug')
+logger.info('testlog_info')
+logger.error('testlog_error')
+
 #app.py---------------------------------
+from logging.config import dictConfig
+
+dictConfig({
+    'version': 1,
+    'formatters': {'default': {
+        'format': '[%(asctime)s] %(levelname)s in %(module)s: %(message)s',
+    }},
+    'handlers': {'wsgi': {
+        'class': 'logging.StreamHandler',
+        'stream': 'ext://flask.logging.wsgi_errors_stream',
+        'formatter': 'default'
+    }},
+    'root': {
+        'level': 'INFO',
+        'handlers': ['wsgi']
+    }
+})
+
 app = Flask(__name__, 
             static_url_path='/static',
             static_folder='static',
             template_folder='templates'
             ) 
+logging.basicConfig(level=logging.DEBUG) #for loging
 app.config['JSON_AS_ASCII'] = False
 app.config["SECRET_KEY"] = "sample1201" #form追加の際追加　不要？
+app.debug = True
 
 @app.route("/")
 def index():
@@ -67,20 +105,19 @@ tickers
 @app.route("/tickers",methods=['GET','POST'])
 def tickers():
     if request.method == 'GET':
-        #post = Post.query.all()
-        posts = session.query(Tickers).all()
-    return render_template ('tickers.html', posts=posts)
+        posts = session.query(Tickers).order_by(Tickers.create_time.desc()).all()
+        return render_template ('tickers.html', posts=posts)
 
 @app.route("/tickers_create",methods=['GET','POST'])
 def tickers_create():
     form = Tickers_Form(request.form)
     if request.method == 'POST' and form.validate():
-        stock_name = request.form.get('stock_name')
         ticker = request.form.get('ticker')
+        stock_name = request.form.get('stock_name')
         purchase_format = request.form.get('purchase_format')
         currency = request.form.get('currency')
         exchange = request.form.get('exchange')
-        post = Tickers(stock_name=stock_name,ticker=ticker,
+        post = Tickers(ticker=ticker,stock_name=stock_name,
                         purchase_format=purchase_format,currency=currency,
                         exchange=exchange)
 
@@ -90,9 +127,36 @@ def tickers_create():
     else:
         return render_template ('tickers_create.html', form=form)
 
+@app.route('/update/<int:id>', methods=['GET','POST'])
+def update_tickers(id):
+    tickers = session.query(Tickers).get(id)
+    form = Tickers_Form(request.form) #リファから変えて詳細追加
 
+    if request.method == 'POST' and form.validate():#  and form.validate()　抜いたら進んだ？？
+        tickers.ticker = request.form.get('ticker')
+        tickers.stock_name = request.form.get('stock_name')
+        tickers.purchase_format = request.form.get('purchase_format')
+        tickers.currency = request.form.get('currency')
+        tickers.exchange = request.form.get('exchange')
+        session.commit()
 
+        return redirect(url_for('tickers')) #(url_for('/tickers'))
 
+    elif request.method == 'GET':
+        form.stock_name.data = tickers.stock_name #(.data)が抜けてて6hハマった注意
+        form.ticker.data = tickers.ticker
+        form.purchase_format.data = tickers.purchase_format
+        form.currency.data = tickers.currency
+        form.exchange.data = tickers.exchange
+
+    return render_template('tickers_each.html', form=form, id=id)
+
+@app.route('/tickers/delete/<int:id>', methods=['GET','POST'])
+def delete_tickers(id):
+    tickers = session.query(Tickers).get(id)
+    session.delete(tickers)
+    session.commit()
+    return redirect(url_for('tickers'))
 
 
 """

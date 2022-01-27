@@ -43,7 +43,7 @@ def init_db():
     # you will have to import them first before calling init_db()
     from models.tickers import Tickers
     from models.tickers import Student
-    from models.test_class import Tickers
+    from models.ztest_class import Tickers #test用
     Base.metadata.create_all(bind=engine)
 
 

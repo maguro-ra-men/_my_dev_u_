@@ -1,8 +1,9 @@
 {% extends "base.html" %}
 {% block main %}
     <h1>tickers</h1>
-    <a href="/tickers_create" role="botton">新規作成</a>
-    <table border="1" class="table table-condensed">
+    <a href="/tickers_create" role="botton">新規作成</a>　 編集：idクリック
+    <table border="1" class="uk-table uk-table-hover uk-table-shrink">
+        <thead>
         <tr>
             <th class="table-primary">id</th>
             <th class="table-primary">ticker</th>
@@ -12,10 +13,13 @@
             <th class="table-primary">exchange</th>
             <th class="table-primary">create_time</th>
         </tr>
+        </thead>
+        
+        {% for post in posts %}
+        <tbody>
         <tr>
-            {% for post in posts %}
             <article>
-            <td>{{ post.id }}</td>
+            <td><a href="{{url_for('update_tickers',id=post.id)}}">{{ post.id }}</a></td>
             <td>{{ post.ticker }}</td>
             <td>{{ post.stock_name }}</td>
             <td>{{ post.purchase_format }}</td>
@@ -24,8 +28,10 @@
             <td>{{ post.create_time }}</td>
             </article>
         </tr>
+        </tbody>
+        {% endfor %}    
     </table>
-    {% endfor %}
+    
 {% endblock %}
 
 

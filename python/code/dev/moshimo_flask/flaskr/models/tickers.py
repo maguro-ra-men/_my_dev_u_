@@ -1,3 +1,4 @@
+from cProfile import label
 from sqlite3 import Timestamp
 from time import time
 from sqlalchemy import Column, Integer, String, DateTime
@@ -29,7 +30,7 @@ class Tickers(Base):
         
     def __repr__(self):
         #return f'<Tickers {self.ticker!r}>'
-        return f'<Tickers( {self.id},{self.stock_name},{self.create_time})>'
+        return f'<Tickers( {self.id},{self.ticker},{self.stock_name},{self.create_time})>'
   
 
 #if __name__ == '__main__':
