@@ -41,9 +41,9 @@ def init_db():
     # import all modules here that might define models so that
     # they will be registered properly on the metadata.  Otherwise
     # you will have to import them first before calling init_db()
-    from models.tickers import Tickers
-    from models.tickers import Student
-    from models.ztest_class import Tickers #test用
+    from modules.cls.tbl.tickers import Tickers
+    from modules.cls.tbl.tickers import Student
+    from modules.cls.tbl.ztest_class import Tickers #test用
     Base.metadata.create_all(bind=engine)
 
 

@@ -1,6 +1,6 @@
 #from distutils.dir_util import create_tree #不要？
-from unicodedata import name
-from flask import Flask, request, jsonify
+from unicodedata import name #不要？
+from flask import Flask, request
 from flask import render_template, redirect, url_for, request
 import datetime
 import pytz #for use time zone
@@ -9,20 +9,21 @@ import pytz #for use time zone
 #from flask_sqlalchemy import SQLAlchemy #flask 使う？
 #from sqlalchemy import create_engine #不要？
 
-
+#modulesのpath通し、logに利用
+rootpath='C:\\Users\\kazu\\_my_dev_u_\\python\\code\\dev\\moshimo_flask\\flaskr'
 #pj用moduleのpython pathを通す。（os.path.dirname～～ではcdまでしか取れずNGだった）
 import sys
-sys.path.append("C:\\Users\\kazu\\_my_dev_u_\\python\\code\\dev\\moshimo_flask\\flaskr")
+sys.path.append(f"{rootpath}")
 
 #my module
-from db import *
-from models.tickers import Tickers
-from models.forms import Tickers_Form
+from modules.db import *
+from modules.cls.tbl.tickers import Tickers
+from modules.cls.forms import Tickers_Form
 
 #loging
 import logging
 logger = logging.getLogger(__name__)
-filehandler = logging.FileHandler('test.log')
+filehandler = logging.FileHandler(f'{rootpath}/log/test.log')
 streamhandler = logging.StreamHandler()
 logger.addHandler(filehandler)
 logger.addHandler(streamhandler)

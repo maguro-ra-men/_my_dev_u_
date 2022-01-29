@@ -6,7 +6,7 @@ from flask import Flask, request
 from flask import render_template, request, redirect
 from jinja2 import Template, Environment, FileSystemLoader #不要？
 
-from db import *
+from modules.db import *
 from models.tickers import Tickers
 
 app = Flask(__name__)

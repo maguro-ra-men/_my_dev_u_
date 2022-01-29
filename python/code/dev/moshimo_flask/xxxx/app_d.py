@@ -13,7 +13,7 @@ import sys
 sys.path.append("C:\\Users\\kazu\\_my_dev_u_\\python\\code\\dev\\moshimo_flask\\flaskr")
 
 #my module
-from db import *
+from modules.db import *
 from models.tickers import Tickers
 
 #app.py---------------------------------
