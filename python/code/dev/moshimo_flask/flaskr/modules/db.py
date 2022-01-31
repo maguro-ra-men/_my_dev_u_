@@ -2,13 +2,14 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 #import pymysql
+import MySQLdb
 
 # エンジンの定義
 database = 'mysql+pymysql://%s:%s@%s:%s/%s?charset=utf8' % (
     "kazu",
     "11cRIudj9aSi",
     "localhost",
-    "50000",
+    "3306",#"50000 さらばmariaDB"
     "dev_moshimo",
 )
 #engine = create_engine('%s' % (database), encoding="utf-8",echo=True)
