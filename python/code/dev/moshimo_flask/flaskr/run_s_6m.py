@@ -3,6 +3,7 @@ rootpath='C:\\Users\\kazu\\_my_dev_u_\\python\\code\\dev\\moshimo_flask\\flaskr'
 #pj用moduleのpython pathを通す。（os.path.dirname～～ではcdまでしか取れずNGだった）
 import sys
 sys.path.append(f"{rootpath}")
+sys.path.append("C:\\Users\\kazu\\_my_dev_u_\\python\\code\\dev\\moshimo_flask\\flaskr\\modules")
 
 #loging
 from logging import getLogger,config
@@ -45,10 +46,22 @@ Run Common modules
 #2.Check duplicate data.
 from modules.check_duplicate_data import check_results
 num_of_error = check_results()
+print(check_results())
+
+print(num_of_error)
 
 
+from modules.ztest_a import check_resultsz
+print(check_resultsz())
+
+
+if num_of_error >= 1:
+    sys.exit('error:table不整合')
 
 #3 create work list
+
+
+
 
 #4.data fetch
 

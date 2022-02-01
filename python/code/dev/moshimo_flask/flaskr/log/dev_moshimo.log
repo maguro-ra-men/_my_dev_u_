@@ -1,2 +1,4 @@
 [2022-01-30 16:51:50,294][ERROR][2.Check duplicate data/error:tarade status on ,rtype=変数のtickerが2以上？][<stdin>]
 [2022-01-30 16:51:59,107][ERROR][2.Check duplicate data/error:tarade status on ,rtype=変数のtickerが2以上？][<stdin>]
+[2022-02-01 20:08:15,799][ERROR][2.Check duplicate data/error:tarade status on ,rtype=変数のtickerとfund status onが2以上？][<stdin>]
+[2022-02-01 22:53:31,976][ERROR][2.Check duplicate data/error:tarade status on ,rtype=変数のtickerとexe holdが2以上？][<stdin>]
