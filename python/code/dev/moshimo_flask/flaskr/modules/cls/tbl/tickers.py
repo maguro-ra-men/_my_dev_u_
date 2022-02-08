@@ -2,7 +2,7 @@ from cProfile import label
 from sqlite3 import Timestamp
 from time import time
 from sqlalchemy import Column, Integer, String, DateTime
-from modules.db import Base
+from conf.db import Base
 from datetime import datetime
 import pytz #for use time zone
 

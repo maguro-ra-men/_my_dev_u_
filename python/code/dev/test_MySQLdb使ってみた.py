@@ -23,3 +23,29 @@ connection.commit()
  
 # 接続を閉じる
 connection.close()
+
+
+"""
+旧　table 重複排除(stock)（pandasがupsert不可能でデータ重複する為）
+"""
+#重複排除
+import pymysql
+connection = pymysql.connect(host='localhost', port=50000, user='kazu', password='11cRIudj9aSi', db='dev_moshimo')
+try:
+    with connection.cursor() as cursor:
+        sql = ('''
+               DELETE FROM dev_moshimo.stock_prices
+               WHERE create_time IN (
+                   SELECT create_time FROM (
+                       SELECT create_time FROM dev_moshimo.stock_prices
+                       GROUP BY date,ticker
+                       HAVING COUNT(*) > 1
+                       ) AS tmp
+                   );
+               ''')
+        cursor.execute(sql)
+        connection.commit()
+        print('sql重複削除 実行完了')
+finally:
+    connection.close()
+    print('connection close')

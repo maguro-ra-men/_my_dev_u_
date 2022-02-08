@@ -16,7 +16,7 @@ import sys
 sys.path.append(f"{rootpath}")
 
 #my module
-from modules.db import *
+from conf.db import *
 from modules.cls.tbl.tickers import Tickers
 from modules.cls.forms import Tickers_Form
 
