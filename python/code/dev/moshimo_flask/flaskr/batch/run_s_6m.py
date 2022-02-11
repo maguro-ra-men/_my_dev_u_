@@ -11,7 +11,7 @@ from conf.logger_conf import *
 logger = getLogger(__name__)
 
 #my module
-from modules.db import *
+from conf.db import *
 from modules.cls.tbl.tickers import Tickers
 from modules.cls.forms import Tickers_Form
 
@@ -27,11 +27,12 @@ main_rtype='simu'
 #定数をcsv化
 import pandas as pd
 df=pd.DataFrame({'drange': [f'{main_drange}'],
-    'app_rtype': [f'{main_rtype}'],'index':['1']})
+    'app_rtype': [f'{main_rtype}']})
+df=df.rename_axis('index') #indexに名前を付ける
 df.to_csv(f'{rootpath}\\const.csv') 
 
 #他moduleは以下から定数をimportし利用
-from modules.variable import app_drange,app_rtype
+from modules.variable import app_drange,app_rtype,fdate,tdate
 print(f'DataRange→　{app_drange}')
 print(f'RunType→　{app_rtype}')
 
@@ -50,4 +51,9 @@ from modules.fetch_api_data import *
 
 
 #4.trade
+from modules.trade import *
+
+
+
+
 print('end:main')

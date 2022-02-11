@@ -12,22 +12,10 @@ logger = getLogger(__name__)
 
 #my module
 from conf.db import engine,session
-from modules.variable import app_drange,app_rtype
+from modules.variable import app_drange,app_rtype,fdate,tdate
 
 import pandas as pd
 
-"""
-date rangeの確定
-"""
-#app_drangeからgetする期間判定//tech chart算出の為、実際期間+21日必要。ざっくり多めに取る
-import datetime
-from dateutil.relativedelta import relativedelta #～日後、ヶ月後を算出可能なライブラリ
-if app_drange=='past6month':
-    tdate=datetime.date.today()
-    fdate = tdate.replace(day=1) + relativedelta(months=-7)
-elif app_drange=='today':
-    tdate=datetime.date.today()
-    fdate = tdate.replace(day=1) + relativedelta(months=-1)
 
 """
 df_wlist作成

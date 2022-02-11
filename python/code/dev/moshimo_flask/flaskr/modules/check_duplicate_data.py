@@ -82,7 +82,7 @@ def check_results():
     check='tarade status on ,rtype=変数のtickerとtrade_resultsが2以上？' #title------------------------------
     query=f'select a.id, a.status ,a.rtype ,a.ticker ,count(*),b.id\
         from `trade` as a left join trade_results as b ON (a.id  = b.trade_id)\
-        where a.status="on" and a.rtype="simu" and b.id >=1\
+        where a.status="on" and a.rtype="{app_rtype}" and b.id >=1\
         GROUP by a.id, a.status, a.rtype, a.ticker\
         having COUNT(*) > 1'
     df = pd.read_sql_query(query, engine)
