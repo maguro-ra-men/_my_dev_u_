@@ -1,5 +1,5 @@
 from sqlalchemy import * #Column, Integer, String
-from modules.db import Base
+from conf.db import Base
 
 class Tickers(Base):  
     __tablename__ = 'tickers'  

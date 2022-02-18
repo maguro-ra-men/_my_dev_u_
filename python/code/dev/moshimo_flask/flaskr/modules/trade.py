@@ -40,7 +40,7 @@ df_wlist = pd.read_sql_query(query, engine)
 #不要？？ df_wlist.to_csv(f'{rootpath}\\wlist.csv') 
 
 #不要？？ from modules.cls.t_val import T_R_VAL
-
+r=0 #あとで消す
 for r in df_wlist.index:
     #不要？？ ex_rate = T_R_VAL(r).ex_rate
     #不要？？ c_price = T_R_VAL(r).c_price
@@ -52,21 +52,31 @@ for r in df_wlist.index:
     bb_highs = df_wlist.loc[r,'bb_highs']
     bb_lows = df_wlist.loc[r,'bb_lows']
     ticker = df_wlist.loc[r,'ticker']
-    trade_id = TBL_VAL.tbl_trade_id(ticker)
+    date = df_wlist.loc[r,'date']
+    trade_id = TBL_VAL.tbl_trade_id(ticker) #不要？
     trade_phase = TBL_VAL.tbl_trade_phase(ticker)
+    trade_last_run_date=TBL_VAL.tbl_trade_last_run_date(ticker)
 
+    if not date == trade_last_run_date: #trade保持のdateが異なる？
+        TBL_VAL.tbl_upd_trade_turn_start(ticker,date) #turn開始前にtrade idの3項目を更新。
+
+    				
+
+
+    #Trade stageへ
+    """ tradeが動く順番に作ろう
     if trade_phase == '1' or trade_phase == '1a':
-        from modules.t_stage_a import * #trade phase=1.buy初回約定？
+        from modules.trade_stage_a import * #trade phase=1.buy初回約定？
     else:
         print('end:phase1')
 
     if trade_phase == '2' or trade_phase == '2a':
-        from modules.t_stage_b import * #trade phase=2.sell初回約定？
+        from modules.trade_stage_b import * #trade phase=2.sell初回約定？
     else:
         print('end:phase2')
-
+    """
     if trade_phase == '0':
-        from modules.t_stage_c import * #trade phase=0.約定ナシ？
+        from modules.trade_stage_c import * #trade phase=0.約定ナシ？
     else:
         print('end:phase0')
     

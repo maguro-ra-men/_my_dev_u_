@@ -11,7 +11,7 @@ from flask import render_template
 from flask_wtf import FlaskForm
 from wtforms import StringField, TextAreaField, ValidationError
 
-from modules.db import *
+from conf.db import *
 from models.ztest_class import Tickers
 from models.ztest_forms import RegistrationForm
 

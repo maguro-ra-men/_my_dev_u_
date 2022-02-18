@@ -17,11 +17,14 @@ from modules.cls.tbl_val import TBL_VAL
 
 import pandas as pd
 
-trade_todays_trade=TBL_VAL.tbl_trade_todays_trade(ticker)
+trade_end_of_turn=TBL_VAL.tbl_trade_end_of_turn(ticker)
 
-if trade_todays_trade == 1:
+if trade_end_of_turn == 1:
     #loop終了
     print('loop終了')
 
 if c_price <= mov_avg: #現在価格は移動平均線より下？
     
+
+Y:変数Residual funds_for_buy = fund residual funds - Executionのbuyの複数のExecution priceの合計
+（buy増しする資金がある？）Residual funds_for_buy > trade invest funds X 0.95
