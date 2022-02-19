@@ -42,8 +42,7 @@ df_wlist = pd.read_sql_query(query, engine)
 #不要？？ from modules.cls.t_val import T_R_VAL
 r=0 #あとで消す
 for r in df_wlist.index:
-    #不要？？ ex_rate = T_R_VAL(r).ex_rate
-    #不要？？ c_price = T_R_VAL(r).c_price
+    ticker = df_wlist.loc[r,'ticker']
     ex_rate = df_wlist.loc[r,'ex_rate']
     c_price = df_wlist.loc[r,'c_price']
     high_price = df_wlist.loc[r,'high_price']
@@ -51,11 +50,21 @@ for r in df_wlist.index:
     mov_avg = df_wlist.loc[r,'mov_avg']
     bb_highs = df_wlist.loc[r,'bb_highs']
     bb_lows = df_wlist.loc[r,'bb_lows']
-    ticker = df_wlist.loc[r,'ticker']
     date = df_wlist.loc[r,'date']
-    trade_id = TBL_VAL.tbl_trade_id(ticker) #不要？
-    trade_phase = TBL_VAL.tbl_trade_phase(ticker)
-    trade_last_run_date=TBL_VAL.tbl_trade_last_run_date(ticker)
+    #out csv
+    df=pd.DataFrame({
+        'ticker': [f'{ticker}'], 'ex_rate': [f'{ex_rate}'],
+        'c_price': [f'{c_price}'], 'high_price': [f'{high_price}'],
+        'low_price': [f'{low_price}'], 'mov_avg': [f'{mov_avg}'],
+        'bb_highs': [f'{bb_highs}'], 'bb_lows': [f'{bb_lows}'],
+        'date': [f'{date}'],
+        })
+    df=df.rename_axis('index') #indexに名前を付ける
+    df.to_csv(f'{rootpath}\\one_day_wlist.csv') 
+    #get latest values
+    list=TBL_VAL.tbl_trade_single(ticker)
+    trade_id, trade_phase, trade_last_run_date, trade_end_of_turn = \
+        list[0], list[1], list[2], list[3]    
 
     if not date == trade_last_run_date: #trade保持のdateが異なる？
         TBL_VAL.tbl_upd_trade_turn_start(ticker,date) #turn開始前にtrade idの3項目を更新。
@@ -79,5 +88,5 @@ for r in df_wlist.index:
         from modules.trade_stage_c import * #trade phase=0.約定ナシ？
     else:
         print('end:phase0')
-    
+print(f'end::::trade date is {date}')
     

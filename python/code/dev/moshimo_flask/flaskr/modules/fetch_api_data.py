@@ -15,6 +15,8 @@ from conf.db import engine,session
 from modules.variable import app_drange,app_rtype,fdate,tdate
 
 import pandas as pd
+import datetime
+from dateutil.relativedelta import relativedelta
 
 
 """

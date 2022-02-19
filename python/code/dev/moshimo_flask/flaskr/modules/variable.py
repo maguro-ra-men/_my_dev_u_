@@ -1,6 +1,9 @@
 #csvのフォルダpath定義
 rootpath='C:\\Users\\kazu\\_my_dev_u_\\python\\code\\dev\\moshimo_flask\\flaskr'
 import pandas as pd
+"""
+定数を変数に代入
+"""
 df = pd.read_csv(f'{rootpath}\\const.csv', index_col="index")
 
 app_drange=df.loc[0,'drange']
@@ -20,3 +23,17 @@ if app_drange=='past6month':
 elif app_drange=='today':
     tdate=datetime.date.today()
     fdate = tdate.replace(day=1) + relativedelta(months=-1)
+"""
+API DATAからone dayで取り出した値を変数に代入
+"""
+df = pd.read_csv(f'{rootpath}\\one_day_wlist.csv', index_col="index")
+
+ticker = df.loc[0,'ticker']
+ex_rate = df.loc[0,'ex_rate']
+c_price = df.loc[0,'c_price']
+high_price = df.loc[0,'high_price']
+low_price = df.loc[0,'low_price']
+mov_avg = df.loc[0,'mov_avg']
+bb_highs = df.loc[0,'bb_highs']
+bb_lows = df.loc[0,'bb_lows']
+date = df.loc[0,'date']

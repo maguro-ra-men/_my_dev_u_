@@ -56,4 +56,4 @@ from modules.trade import *
 
 
 
-print('end:main')
+print('end::::')
