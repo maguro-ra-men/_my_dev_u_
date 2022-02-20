@@ -73,20 +73,23 @@ for r in df_wlist.index:
 
 
     #Trade stageへ
-    """ tradeが動く順番に作ろう
-    if trade_phase == '1' or trade_phase == '1a':
-        from modules.trade_stage_a import * #trade phase=1.buy初回約定？
+    if trade_phase == '1': #trade phase=1.buy初回約定？
+        from modules.trade_stage_b import STAGE_B #trade phase=0.約定ナシ？
+        STAGE_B.b()
     else:
-        print('end:phase1')
+        print('end::::phase1_STAGE_B')
 
-    if trade_phase == '2' or trade_phase == '2a':
-        from modules.trade_stage_b import * #trade phase=2.sell初回約定？
+    """ tradeが動く順番に作ろう
+    if trade_phase == '2': #trade phase=2.sell初回約定？
+        from modules.trade_stage_c import STAGE_C #trade phase=0.約定ナシ？
+        STAGE_C.c()
     else:
-        print('end:phase2')
+        print('end::::phase2_STAGE_C')
     """
-    if trade_phase == '0':
-        from modules.trade_stage_c import * #trade phase=0.約定ナシ？
+    if trade_phase == '0': #trade phase=0.約定ナシ？
+        from modules.trade_stage_a import STAGE_A
+        STAGE_A.a()
     else:
-        print('end:phase0')
+        print('end::::phase0_STAGE_A')
 print(f'end::::trade date is {date}')
     

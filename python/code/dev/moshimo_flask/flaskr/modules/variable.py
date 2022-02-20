@@ -26,14 +26,17 @@ elif app_drange=='today':
 """
 API DATAからone dayで取り出した値を変数に代入
 """
-df = pd.read_csv(f'{rootpath}\\one_day_wlist.csv', index_col="index")
+class API_DATA_ONE_DAY():
+    def one_day():
+        df = pd.read_csv(f'{rootpath}\\one_day_wlist.csv', index_col="index")
 
-ticker = df.loc[0,'ticker']
-ex_rate = df.loc[0,'ex_rate']
-c_price = df.loc[0,'c_price']
-high_price = df.loc[0,'high_price']
-low_price = df.loc[0,'low_price']
-mov_avg = df.loc[0,'mov_avg']
-bb_highs = df.loc[0,'bb_highs']
-bb_lows = df.loc[0,'bb_lows']
-date = df.loc[0,'date']
+        ticker = df.loc[0,'ticker']
+        ex_rate = df.loc[0,'ex_rate']
+        c_price = df.loc[0,'c_price']
+        high_price = df.loc[0,'high_price']
+        low_price = df.loc[0,'low_price']
+        mov_avg = df.loc[0,'mov_avg']
+        bb_highs = df.loc[0,'bb_highs']
+        bb_lows = df.loc[0,'bb_lows']
+        date = df.loc[0,'date']
+        return ticker, ex_rate, c_price, high_price, low_price, mov_avg, bb_highs, bb_lows, date

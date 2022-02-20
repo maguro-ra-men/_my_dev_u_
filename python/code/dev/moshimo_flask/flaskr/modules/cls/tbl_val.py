@@ -77,16 +77,16 @@ class TBL_VAL():
         else:
             return order_id, order_price, order_quantity, order_pf_order_number
 
-    def tbl_upd_order_price(order_id,tmp_order_price):
+    def tbl_upd_order_price(order_id,tmp_order_price, run_date_o):
         query=text(f'UPDATE `order` \
-            SET order_price={tmp_order_price}\
+            SET order_price={tmp_order_price}, run_date_o="{run_date_o}"\
             WHERE id={order_id};')
         session.execute(query)
         session.commit()
 
-    def tbl_upd_order_after_exe(order_id,status):
+    def tbl_upd_order_after_exe(order_id,status, run_date_o):
         query=text(f'UPDATE `order` \
-            SET status="{status}"\
+            SET status="{status}", run_date_o="{run_date_o}"\
             WHERE id={order_id};')
         session.execute(query)
         session.commit()
@@ -99,10 +99,11 @@ class TBL_VAL():
         session.commit()
 
     def tbl_upd_fund_rdiff_funds(trade_id, order_id, \
-            residual_funds, update_diff_funds):
+            residual_funds, update_diff_funds, run_date_f):
         query=text(f'UPDATE fund \
             SET residual_funds={residual_funds}, \
-                update_diff_funds={update_diff_funds}\
+                update_diff_funds={update_diff_funds}, \
+                run_date_f="{run_date_f}"\
             WHERE trade_id={trade_id} and order_id={order_id};')
         session.execute(query)
         session.commit()
@@ -128,7 +129,7 @@ class TBL_VAL():
             where a.id="{trade_id}" and b.status ="on" and \
                 b.id=(select max(b.id) from fund)\
             ORDER BY fund_id DESC\
-            LIMIT 1;'
+            LIMIT 2;'
         df = pd.read_sql_query(query, engine)
         fund_before_r_funds = df.loc[1,'residual_funds']
         return fund_before_r_funds
@@ -153,31 +154,34 @@ class TBL_VAL():
         return ''.join([random.choice(dat) for i in range(num)])
 
     def tbl_ins_order(trade_id, order_phase, status,otype, 
-            order_price, quantity, pf_order_number):
+            order_price, quantity, pf_order_number, run_date_o):
         query=text(f'insert into `order` (trade_id, phase, status,otype, \
-            order_price, quantity, pf_order_number) \
+            order_price, quantity, pf_order_number, run_date_o) \
             values({trade_id}, {order_phase}, "{status}", "{otype}", \
-            {order_price}, {quantity}, "{pf_order_number}");')
+            {order_price}, {quantity}, "{pf_order_number}", \
+            "{run_date_o}");')
         session.execute(query)
         session.commit()
 
     def tbl_ins_exe(trade_id, exe_phase, order_id, \
             otype, exe_price, quantity, exe_status, 
-            pf_order_number, close_order_id):
+            pf_order_number, close_order_id, run_date_e):
         query=text(f'insert into execution (trade_id, phase, order_id, \
                 otype, exe_price, quantity, exe_status,\
-                pf_order_number, close_order_id) \
-            values({trade_id}, {exe_phase}, "{order_id}", \
-                "{otype}", {exe_price}, {quantity}, "{exe_status}"\
-            "{pf_order_number}", "{close_order_id}");')
+                pf_order_number, close_order_id, run_date_e) \
+            values({trade_id}, "{exe_phase}", {order_id}, \
+                "{otype}", {exe_price}, {quantity}, "{exe_status}", \
+            "{pf_order_number}", "{close_order_id}", "{run_date_e}");')
         session.execute(query)
         session.commit()
 
     def tbl_ins_fund(trade_id, order_id, exe_id, rtype, ticker, 
-                        status, residual_funds, update_diff_funds):
+                        status, residual_funds, update_diff_funds, run_date_f):
         query=text(f'insert into `fund` (trade_id, order_id, exe_id, rtype, \
-                    ticker, status, residual_funds, update_diff_funds) \
+                    ticker, status, residual_funds, update_diff_funds, \
+                    run_date_f) \
             values({trade_id}, {order_id}, {exe_id}, "{rtype}", "{ticker}",  \
-            "{status}", {residual_funds}, {update_diff_funds});')
+            "{status}", {residual_funds}, {update_diff_funds}, \
+            "{run_date_f}");')
         session.execute(query)
         session.commit()

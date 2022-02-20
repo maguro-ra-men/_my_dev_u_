@@ -58,8 +58,6 @@ for r in df_clist.index:
     else:
         df=df.append(df_temp)
 
-result = data.get_data_yahoo('USDJPY=X',start='2022-1-1')
-df.to_csv(f'{rootpath}\\const.csv') 
 """
 df整形(currency)
 """

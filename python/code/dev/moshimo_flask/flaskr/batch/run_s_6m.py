@@ -33,8 +33,8 @@ df.to_csv(f'{rootpath}\\const.csv')
 
 #他moduleは以下から定数をimportし利用
 from modules.variable import app_drange,app_rtype,fdate,tdate
-print(f'DataRange→　{app_drange}')
-print(f'RunType→　{app_rtype}')
+print(f'DataRange→ {app_drange}')
+print(f'RunType→ {app_rtype}')
 
 """
 Run Common modules
@@ -44,7 +44,7 @@ from modules.check_duplicate_data import check_results
 #print(check_results()) #チェック用
 if check_results() >= 1:
     #sys.exit('error:table不整合')
-    print('y エラーあり　あとでコメント外す↑')
+    print('y エラーあり 6あとでコメント外す↑')
 
 #3 fetch api data
 from modules.fetch_api_data import *

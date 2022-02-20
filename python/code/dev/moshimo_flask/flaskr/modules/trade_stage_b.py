@@ -25,8 +25,8 @@ from modules.cls.tbl_val import TBL_VAL
 
 import pandas as pd
 
-class STAGE_A():
-    def a():
+class STAGE_B():
+    def b():
         #get latest values
         list = API_DATA_ONE_DAY.one_day()
         ticker, ex_rate, c_price, high_price, low_price, mov_avg, \
@@ -34,7 +34,7 @@ class STAGE_A():
                 list[0], list[1], list[2], list[3], list[4], list[5], \
                     list[6], list[7], list[8]
         
-        print(f'start::::trade_stage_a date is {date}')
+        print(f'start::::trade_stage_b date is {date}')
 
         list = TBL_VAL.tbl_trade_single(ticker)
         global trade_id
@@ -188,4 +188,4 @@ class STAGE_A():
                         print('あとで実装')
 
 
-        print(f'end::::trade_stage_a date is {date}')
+        print(f'end::::trade_stage_b date is {date}')
