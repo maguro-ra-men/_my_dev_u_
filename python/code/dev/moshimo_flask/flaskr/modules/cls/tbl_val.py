@@ -29,25 +29,30 @@ class TBL_VAL():
 
     def tbl_trade_single(ticker):
         query=f'select a.id, a.rtype, a.phase, a.status, a.ticker, \
-                a.last_run_date, cnt_run_date, end_of_turn\
+                a.last_run_date, cnt_run_date, end_of_turn, initial_fund_id, \
+                b.id as fund_id, residual_funds\
             from `trade` as a \
             left join fund as b ON (a.id  = b.trade_id)\
             where a.status="on" and a.rtype="{app_rtype}" and \
                 a.ticker = "{ticker}" and\
-                b.status ="on" and b.rtype="{app_rtype}"'
+                b.status_f ="on" and b.rtype="{app_rtype}"'
         df = pd.read_sql_query(query, engine)
         trade_id = df.loc[0,'id']
         trade_phase = df.loc[0,'phase']
         trade_last_run_date = df.loc[0,'last_run_date']
         trade_end_of_turn = df.loc[0,'end_of_turn']
-        return trade_id, trade_phase, trade_last_run_date, trade_end_of_turn
+        trade_initial_fund_id = df.loc[0,'initial_fund_id']
+        trade_fund_id = df.loc[0,'fund_id']
+        trade_in_residual_funds = df.loc[0,'residual_funds']
+        return trade_id, trade_phase, trade_last_run_date, trade_end_of_turn, \
+            trade_initial_fund_id, trade_fund_id, trade_in_residual_funds
 
     def tbl_upd_trade_turn_start(ticker,date):
         query=f'select a.id, a.ticker, a.phase, a.last_run_date, a.cnt_run_date\
             from `trade` as a \
             left join fund as b ON (a.id  = b.trade_id)\
             where a.status="on" and a.rtype="{app_rtype}" and a.ticker = "{ticker}" and\
-            b.status ="on" and b.rtype="{app_rtype}"'
+            b.status_f ="on" and b.rtype="{app_rtype}"'
         df = pd.read_sql_query(query, engine)
         trade_id = df.loc[0,'id'] #id取得
         cnt_run_date = df.loc[0,'cnt_run_date']
@@ -61,12 +66,12 @@ class TBL_VAL():
 
     def tbl_order_single(trade_id,trade_phase,order_pahase):
         try:
-            query=f'select a.id, a.ticker, a.phase, b.id as order_id, b.phase, \
-            b.status, b.otype, b.order_price, b.quantity, b.pf_order_number\
+            query=f'select a.id, a.ticker, a.phase, b.id as order_id, b.phase_o, \
+            b.status_o, b.otype, b.order_price, b.quantity, b.pf_order_number \
             from `trade` as a \
-            left join `order` as b ON (a.id  = b.trade_id)\
-            where a.id="{trade_id}" and a.phase="{trade_phase}" and\
-            b.status ="on" and b.phase="{order_pahase}";'
+            left join `order` as b ON (a.id  = b.trade_id) \
+            where a.id={trade_id} and a.phase="{trade_phase}" and \
+            b.status_o ="on" and b.phase_o="{order_pahase}"'
             df = pd.read_sql_query(query, engine)
             order_id = df.loc[0,'order_id']
             order_price = df.loc[0,'order_price']
@@ -77,6 +82,59 @@ class TBL_VAL():
         else:
             return order_id, order_price, order_quantity, order_pf_order_number
 
+    def tbl_order_list(trade_id,trade_phase,order_pahase):
+        try:
+            query=f'select a.id, a.ticker, a.phase, b.id as order_id, b.phase_o, \
+            b.status_o, b.otype, b.order_price, b.quantity, b.pf_order_number \
+            from `trade` as a \
+            left join `order` as b ON (a.id  = b.trade_id) \
+            where a.id={trade_id} and a.phase="{trade_phase}" and \
+            b.status_o ="on" and b.phase_o="{order_pahase}"'
+            df = pd.read_sql_query(query, engine)
+            order_id_list = df['order_id'].tolist()
+        except KeyError:
+            pass
+        else:
+            return order_id_list
+
+    def tbl_exe_latest(trade_id, order_id):
+        query=f'select id, trade_id, phase_e, order_id, otype, exe_price, \
+            quantity, status_e, pf_order_number, close_order_id, \
+            run_date_e\
+            from execution\
+            where trade_id={trade_id} and order_id ={order_id} and\
+            id=(select max(id) from execution)\
+            ORDER BY id DESC\
+            LIMIT 1;'
+        df = pd.read_sql_query(query, engine)
+        exe_id = df.loc[0,'id']
+        exe_trade_id = df.loc[0,'trade_id']
+        phase_e = df.loc[0,'phase_e']
+        exe_order_id = df.loc[0,'order_id']
+        exe_price = df.loc[0,'exe_price']
+        exe_quantity = df.loc[0,'quantity']
+        exe_pf_order_number = df.loc[0,'pf_order_number']
+        return exe_id, exe_trade_id, phase_e, exe_order_id, exe_price, exe_quantity, exe_pf_order_number
+
+    def tbl_exe_single(trade_id, phase_e, status_e):
+        query=f'select id, trade_id, phase_e, order_id, otype, exe_price, \
+            quantity, status_e, pf_order_number, close_order_id, \
+            run_date_e\
+            from execution\
+            where trade_id={trade_id} and phase_e ={phase_e} and status_e = {status_e} and \
+            id=(select max(id) from execution)\
+            ORDER BY id DESC\
+            LIMIT 1;'
+        df = pd.read_sql_query(query, engine)
+        exe_id = df.loc[0,'id']
+        exe_trade_id = df.loc[0,'trade_id']
+        phase_e = df.loc[0,'phase_e']
+        exe_order_id = df.loc[0,'order_id']
+        exe_price = df.loc[0,'exe_price']
+        exe_quantity = df.loc[0,'quantity']
+        exe_pf_order_number = df.loc[0,'pf_order_number']
+        return exe_id, exe_trade_id, phase_e, exe_order_id, exe_price, exe_quantity, exe_pf_order_number
+
     def tbl_upd_order_price(order_id,tmp_order_price, run_date_o):
         query=text(f'UPDATE `order` \
             SET order_price={tmp_order_price}, run_date_o="{run_date_o}"\
@@ -84,9 +142,9 @@ class TBL_VAL():
         session.execute(query)
         session.commit()
 
-    def tbl_upd_order_after_exe(order_id,status, run_date_o):
+    def tbl_upd_order_after_exe(order_id,status_o, run_date_o):
         query=text(f'UPDATE `order` \
-            SET status="{status}", run_date_o="{run_date_o}"\
+            SET status_o="{status_o}", run_date_o="{run_date_o}"\
             WHERE id={order_id};')
         session.execute(query)
         session.commit()
@@ -98,13 +156,20 @@ class TBL_VAL():
         session.execute(query)
         session.commit()
 
-    def tbl_upd_fund_rdiff_funds(trade_id, order_id, \
+    def tbl_upd_fund_rdiff_funds(trade_id, order_id, exe_id, \
             residual_funds, update_diff_funds, run_date_f):
         query=text(f'UPDATE fund \
-            SET residual_funds={residual_funds}, \
+            SET exe_id={exe_id}, residual_funds={residual_funds}, \
                 update_diff_funds={update_diff_funds}, \
                 run_date_f="{run_date_f}"\
             WHERE trade_id={trade_id} and order_id={order_id};')
+        session.execute(query)
+        session.commit()
+
+    def tbl_upd_exe_fin_buy_info(exe_id, status_e, close_order_id):
+        query=text(f'UPDATE `execution` \
+            SET status_e="{status_e}", close_order_id={close_order_id}\
+            WHERE id={exe_id};')
         session.execute(query)
         session.commit()
 
@@ -113,7 +178,7 @@ class TBL_VAL():
             b.update_diff_funds, b.id as fund_id \
             from `trade` as a \
             left join fund as b ON (a.id  = b.trade_id)\
-            where a.id="{trade_id}" and b.status ="on" and \
+            where a.id="{trade_id}" and b.status_f ="on" and \
                 b.id=(select max(b.id) from fund)\
             ORDER BY fund_id DESC\
             LIMIT 1;'
@@ -126,7 +191,7 @@ class TBL_VAL():
             b.update_diff_funds, b.id as fund_id \
             from `trade` as a \
             left join fund as b ON (a.id  = b.trade_id)\
-            where a.id="{trade_id}" and b.status ="on" and \
+            where a.id="{trade_id}" and b.status_f ="on" and \
                 b.id=(select max(b.id) from fund)\
             ORDER BY fund_id DESC\
             LIMIT 2;'
@@ -139,49 +204,59 @@ class TBL_VAL():
             b.update_diff_funds, b.id as fund_id \
             from `trade` as a \
             left join fund as b ON (a.id  = b.trade_id)\
-            where a.id="{trade_id}" and b.status ="on" and \
+            where a.id="{trade_id}" and b.status_f ="on" and \
                 b.id=(select max(b.id) from fund)\
             ORDER BY fund_id DESC\
             LIMIT 1;'
         df = pd.read_sql_query(query, engine)
         update_diff_funds = df.loc[0,'update_diff_funds']
         return update_diff_funds
-    
+
+    def tbl_fund_select_o_id(trade_id, order_id):
+        query=f'select a.id, a.ticker, a.phase, b.residual_funds, \
+            b.update_diff_funds, b.id as fund_id \
+            from `trade` as a \
+            left join fund as b ON (a.id  = b.trade_id) \
+            where a.id="{trade_id}" and b.order_id ={order_id} ;'
+        df = pd.read_sql_query(query, engine)
+        update_diff_funds = df.loc[0,'update_diff_funds']
+        return update_diff_funds
+
     def GetRandomStr(num):
         # 英数字をすべて取得
         dat = string.digits + string.ascii_lowercase + string.ascii_uppercase
         # 英数字からランダムに取得
         return ''.join([random.choice(dat) for i in range(num)])
 
-    def tbl_ins_order(trade_id, order_phase, status,otype, 
+    def tbl_ins_order(trade_id, phase_o, status_o,otype, 
             order_price, quantity, pf_order_number, run_date_o):
-        query=text(f'insert into `order` (trade_id, phase, status,otype, \
+        query=text(f'insert into `order` (trade_id, phase_o, status_o,otype, \
             order_price, quantity, pf_order_number, run_date_o) \
-            values({trade_id}, {order_phase}, "{status}", "{otype}", \
+            values({trade_id}, {phase_o}, "{status_o}", "{otype}", \
             {order_price}, {quantity}, "{pf_order_number}", \
             "{run_date_o}");')
         session.execute(query)
         session.commit()
 
-    def tbl_ins_exe(trade_id, exe_phase, order_id, \
-            otype, exe_price, quantity, exe_status, 
+    def tbl_ins_exe(trade_id, phase_e, order_id, \
+            otype, exe_price, quantity, status_e, 
             pf_order_number, close_order_id, run_date_e):
-        query=text(f'insert into execution (trade_id, phase, order_id, \
-                otype, exe_price, quantity, exe_status,\
+        query=text(f'insert into execution (trade_id, phase_e, order_id, \
+                otype, exe_price, quantity, status_e,\
                 pf_order_number, close_order_id, run_date_e) \
-            values({trade_id}, "{exe_phase}", {order_id}, \
-                "{otype}", {exe_price}, {quantity}, "{exe_status}", \
+            values({trade_id}, "{phase_e}", {order_id}, \
+                "{otype}", {exe_price}, {quantity}, "{status_e}", \
             "{pf_order_number}", "{close_order_id}", "{run_date_e}");')
         session.execute(query)
         session.commit()
 
     def tbl_ins_fund(trade_id, order_id, exe_id, rtype, ticker, 
-                        status, residual_funds, update_diff_funds, run_date_f):
+                        status_f, residual_funds, update_diff_funds, run_date_f):
         query=text(f'insert into `fund` (trade_id, order_id, exe_id, rtype, \
-                    ticker, status, residual_funds, update_diff_funds, \
+                    ticker, status_f, residual_funds, update_diff_funds, \
                     run_date_f) \
             values({trade_id}, {order_id}, {exe_id}, "{rtype}", "{ticker}",  \
-            "{status}", {residual_funds}, {update_diff_funds}, \
+            "{status_f}", {residual_funds}, {update_diff_funds}, \
             "{run_date_f}");')
         session.execute(query)
         session.commit()

@@ -45,12 +45,12 @@ def check_results():
         num_of_error=num_of_error+1
 
     check='tarade status on ,rtype=変数のtickerとorder status onが2以上？' #title------------------------------
-    query=f'select a.status ,rtype ,ticker ,count(*),b.status\
+    query=f'select a.status ,rtype ,ticker ,count(*),b.status_o\
         from `trade` as a\
         left join `order` as b \
         ON (a.id  = b.trade_id)\
-        where a.status="on" and a.rtype="{app_rtype}" and b.status ="on"\
-        GROUP by a.status, a.rtype, a.ticker, b.status\
+        where a.status="on" and a.rtype="{app_rtype}" and b.status_o ="on"\
+        GROUP by a.status, a.rtype, a.ticker, b.status_o\
         having COUNT(*) > 1'
     df = pd.read_sql_query(query, engine)
     if df.empty==False:
@@ -58,10 +58,10 @@ def check_results():
         num_of_error=num_of_error+1
 
     check='tarade status on ,rtype=変数のtickerとfund status onが2以上？' #title------------------------------
-    query=f'select a.status ,a.rtype ,a.ticker ,count(*),b.status\
+    query=f'select a.status ,a.rtype ,a.ticker ,count(*),b.status_f\
         from `trade` as a left join fund as b ON (a.id  = b.trade_id)\
-        where a.status="on" and a.rtype="{app_rtype}" and b.status ="on"\
-        GROUP by a.status, a.rtype, a.ticker, b.status\
+        where a.status="on" and a.rtype="{app_rtype}" and b.status_f ="on"\
+        GROUP by a.status, a.rtype, a.ticker, b.status_f\
         having COUNT(*) > 1'
     df = pd.read_sql_query(query, engine)
     if df.empty==False:
@@ -69,10 +69,10 @@ def check_results():
         num_of_error=num_of_error+1
 
     check='tarade status on ,rtype=変数のtickerとexe holdが2以上？' #title------------------------------
-    query=f'select a.status ,a.rtype ,a.ticker ,count(*),b.exe_status\
+    query=f'select a.status ,a.rtype ,a.ticker ,count(*),b.status_e\
         from `trade` as a left join execution as b ON (a.id  = b.trade_id)\
-        where a.status="on" and a.rtype="{app_rtype}" and b.exe_status ="hold"\
-        GROUP by a.status, a.rtype, a.ticker, b.exe_status\
+        where a.status="on" and a.rtype="{app_rtype}" and b.status_e ="hold"\
+        GROUP by a.status, a.rtype, a.ticker, b.status_e\
         having COUNT(*) > 1'
     df = pd.read_sql_query(query, engine)
     if df.empty==False:

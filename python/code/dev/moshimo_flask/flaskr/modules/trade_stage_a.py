@@ -36,12 +36,10 @@ class STAGE_A():
         
         print(f'start::::trade_stage_a date is {date}')
 
-        list = TBL_VAL.tbl_trade_single(ticker)
-        global trade_id
-        trade_id, trade_phase, trade_last_run_date, trade_end_of_turn = \
-            list[0].copy(), list[1], list[2], list[3]
-        print(trade_id)#あとでけす
-        print(trade_phase)#あとでけす
+        list=TBL_VAL.tbl_trade_single(ticker)
+        trade_id, trade_phase, trade_last_run_date, trade_end_of_turn, \
+        trade_initial_fund_id, trade_fund_id, trade_in_residual_funds = \
+            list[0], list[1], list[2], list[3], list[4], list[5], list[6]
 
         try:
             list = TBL_VAL.tbl_order_single(trade_id,0,1) #trade_id,trade_phase,order_pahase
@@ -69,12 +67,17 @@ class STAGE_A():
                     match app_rtype:
                         case 'simu':
                             #create exe
-                            #def::::trade_id, exe_phase, order_id, 
-                            #def::::otype, exe price, quantity, exe_status, 
+                            #def::::trade_id, phase_e, order_id, 
+                            #def::::otype, exe_price, quantity, status_e, 
                             #def::::pf_order_number, close_order_id, run_date_e
                             TBL_VAL.tbl_ins_exe(trade_id, 1, order_id, 
                                     'buy', order_price, order_quantity, 'hold', 
                                     order_pf_order_number, '', date)
+                            #selct exe
+                            list = TBL_VAL.tbl_exe_latest(trade_id, order_id)
+                            exe_id, exe_trade_id, phase_e, exe_order_id, exe_price, \
+                                exe_quantity, exe_pf_order_number = \
+                                list[0], list[1], list[2], list[3], list[4], list[5], list[6]
 
                             #update fund
                             #fundで最新より1つ前のrを取得
@@ -84,21 +87,22 @@ class STAGE_A():
                             fund_before_r_funds - int((order_price * ex_rate) * order_quantity)
                             tmp_diff_funds = tmp_r_funds - fund_before_r_funds
                             TBL_VAL.tbl_upd_fund_rdiff_funds(trade_id, 
-                            order_id,tmp_r_funds, tmp_diff_funds, date)
+                            order_id, exe_id, tmp_r_funds, tmp_diff_funds, date)
 
-                            #update trade phase=1、end_of_turn=1
+                            #update trade （都度指定）
                             #def::::trade_id, trade_phase, end_of_turn
                             TBL_VAL.tbl_upd_trade_after_exe(trade_id, 1, 1)
 
-                            #update order status=off
+                            #update order status_o=off
                             TBL_VAL.tbl_upd_order_after_exe(order_id, 'off', date)
                         case 'real':
                             print('あとで実装')
 
         #get latest values
         list=TBL_VAL.tbl_trade_single(ticker)
-        trade_id, trade_phase, trade_last_run_date, trade_end_of_turn = \
-            list[0], list[1], list[2], list[3]
+        trade_id, trade_phase, trade_last_run_date, trade_end_of_turn, \
+        trade_initial_fund_id, trade_fund_id, trade_in_residual_funds = \
+            list[0], list[1], list[2], list[3], list[4], list[5], list[6]
         try:
             list = TBL_VAL.tbl_order_single(trade_id,0,1) #trade_id,trade_phase,order_pahase
             order_id, order_price, order_quantity, order_pf_order_number = \
@@ -167,7 +171,7 @@ class STAGE_A():
                         #simuなので架空のSEC注文番号を生成
                         tmp_pf_order_number = TBL_VAL.GetRandomStr(10)
                         #create order
-                        #def::::trade_id, order_phase, status,otype, 
+                        #def::::trade_id, phase_o, status_o,otype, 
                         #def::::order_price, quantity, pf_order_number
                         TBL_VAL.tbl_ins_order(trade_id, 1, 'on', 'buy', 
                                 tmp_order_price, tmp_order_quantity, 
@@ -181,7 +185,7 @@ class STAGE_A():
                             fund_r_funds - int((tmp_order_price * ex_rate) * tmp_order_quantity)
                         tmp_diff_funds = tmp_r_funds - fund_r_funds
                         #def:::trade_id, order_id, exe_id, rtype, ticker, 
-                        #def:::status, residual_funds, update_diff_funds, run_date_f
+                        #def:::status_f, residual_funds, update_diff_funds, run_date_f
                         TBL_VAL.tbl_ins_fund(trade_id, order_id, 0, app_rtype, ticker, 
                                 'on', tmp_r_funds, tmp_diff_funds, date)
                     case 'real':

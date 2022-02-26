@@ -28,7 +28,7 @@ query=f'select a.ticker  ,c.currency \
         left join fund as b ON (a.id  = b.trade_id)\
         left join tickers as c ON (a.ticker  = c.ticker)\
         where a.status="on" and a.rtype="{app_rtype}" and \
-        b.status ="on" and b.rtype="{app_rtype}"\
+        b.status_f ="on" and b.rtype="{app_rtype}"\
         GROUP by c.ticker '
 df_wlist = pd.read_sql_query(query, engine)
 

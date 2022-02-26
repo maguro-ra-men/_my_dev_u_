@@ -31,7 +31,7 @@ query=f'select a.ticker, d.date, e.close as ex_rate, d.close as c_price,\
         left join stock_prices as d on (a.ticker = d.ticker)\
         left join currency as e on (c.currency = e.currency and d.date = e.date)\
         where a.status="on" and a.rtype="{app_rtype}" and \
-        	b.status ="on" and b.rtype="{app_rtype}" and \
+        	b.status_f ="on" and b.rtype="{app_rtype}" and \
         	d.date between "{fdate}" and "{tdate}"\
             GROUP by a.ticker,d.date\
             order by a.ticker,d.date asc'
@@ -73,7 +73,7 @@ for r in df_wlist.index:
 
 
     #Trade stageへ
-    if trade_phase == '1': #trade phase=1.buy初回約定？
+    if trade_phase == '1xxxxxxxxxxxxxxxxxxxxxx': #trade phase=1.buy初回約定？
         from modules.trade_stage_b import STAGE_B #trade phase=0.約定ナシ？
         STAGE_B.b()
     else:
