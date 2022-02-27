@@ -193,7 +193,7 @@ class STAGE_B():
                                 #def::::order_price, quantity, pf_order_number
                                 TBL_VAL.tbl_ins_order(trade_id, '1a', 'on', 'buy', 
                                         tmp_order_price, tmp_order_quantity, 
-                                        tmp_pf_order_number, date)
+                                        tmp_pf_order_number, '', date)
                                 #get lasted order_id必要
                                 list = TBL_VAL.tbl_order_single(trade_id,0,1) #trade_id,trade_phase,order_pahase
                                 order_id, order_price, order_quantity, order_pf_order_number = \
@@ -259,7 +259,7 @@ class STAGE_B():
                                     list[0], list[1], list[2], list[3], list[4], list[5], list[6]
                                 #create fund
                                 tmp_r_funds = \
-                                    fund_r_funds + int((tmp_order_price * ex_rate) * tmp_order_quantity)
+                                    fund_r_funds + int((order_price * ex_rate) * order_quantity)
                                 tmp_diff_funds = tmp_r_funds - fund_r_funds
                                 #def:::trade_id, order_id, exe_id, rtype, ticker, 
                                 #def:::status_f, residual_funds, update_diff_funds, run_date_f
@@ -377,7 +377,7 @@ class STAGE_B():
                             #def::::order_price, quantity, pf_order_number
                             TBL_VAL.tbl_ins_order(trade_id, '2', 'on', 'sell', 
                                     tmp_order_price, tmp_order_quantity, 
-                                    tmp_pf_order_number, date)
+                                    tmp_pf_order_number, '', date)
                         case 'real':
                             print('あとで実装')
         

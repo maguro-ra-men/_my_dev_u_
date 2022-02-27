@@ -24,6 +24,7 @@ from modules.variable import app_drange,app_rtype,fdate,tdate, \
 from modules.cls.tbl_val import TBL_VAL
 
 import pandas as pd
+import datetime
 
 class STAGE_C():
     def c():
@@ -40,206 +41,73 @@ class STAGE_C():
         trade_id, trade_phase, trade_last_run_date, trade_end_of_turn, \
         trade_initial_fund_id, trade_fund_id, trade_in_residual_funds = \
             list[0], list[1], list[2], list[3], list[4], list[5], list[6]
-
-        try:
-            #（都度指定）必要な各tableのphase指定が必要
-            list = TBL_VAL.tbl_order_single(trade_id,1,'1a') #trade_id,trade_phase,order_pahase
-            order_id, order_price, order_quantity, order_pf_order_number = \
-                list[0], list[1], list[2], list[3]
-        except TypeError:
-            order_id = None
-
+        
         #1日1回しか売買しないので状態チェック
         if trade_end_of_turn == 1:
             #loop終了
             print('loop終了')
+
+        #select order
+        try:
+            #（都度指定）必要な各tableのphase指定が必要
+            #diff::::trade_id,trade_phase,order_pahase
+            df_order = TBL_VAL.tbl_order_df(trade_id,2,'2a') 
+        except TypeError:
+            df_order = None
+        
+        #selct exe（都度指定）
+        list = TBL_VAL.tbl_exe_single(trade_id, 2, 'close') #trade_id, phase_e, status_e
+        exe_id, exe_trade_id, phase_e, exe_order_id, exe_price, \
+            exe_quantity, exe_pf_order_number, exe_create_time = \
+            list[0], list[1], list[2], list[3], list[4], list[5], list[6], list[7]
+        #この実行日を変数化
+        tmp_run_date = date
+        #検索値に必要なのでtimestampをdateに変換
+        tmp_exe_crat_date = str(exe_create_time)
+        tmp_exe_crat_date = date.split(tmp_exe_crat_date)#何故かリストになる
+        tmp_exe_crat_date = tmp_exe_crat_date[0]        
+
+        #stock_pricesからexe_dateの次営業日を取得。
+        #もしなければ約定当日なのでtodayを代入
+        next_business_day = TBL_VAL.tbl_st_prices_next_biz_day\
+            (ticker, tmp_exe_crat_date) #ticker,wheredate
+
         
         #現在価格は移動平均線より下?-----------------------------
-        if c_price <= mov_avg:
+        if c_price < exe_price:
             """
             不要？
-            #約定確認　エラー回避策
+            #約定確認 エラー回避策
             try:
                 order_id in globals() #o idは定義済み？
             except NameError:
                 order_id = None
             """
-            #約定確認 buy増し
-            if not order_id is None: #o idはnoneじゃない？
-                list = [order_id]
-                for i in list:
+            #実行dateはphase2約定日の次営業日？
+            if tmp_run_date == next_business_day:
+                #y 約定の次営業日は何もしない
+                #update trade （都度指定）
+                #def::::trade_id, trade_phase, end_of_turn
+                TBL_VAL.tbl_upd_trade_after_exe(trade_id, 2, 1)
+                #loop終了
+            
+            #約定確認 sell 2a 全決済
+            if not df_order is None: #o idはnoneじゃない？
+                for r in df_order:
+                    #df_orderから取り出し
+                    order_id = df_order.loc[r,'order_id']
+                    order_price = df_order.loc[r,'order_price']
+                    order_quantity = df_order.loc[r,'quantity']
+                    order_pf_order_number= df_order.loc[r,'pf_order_number']
+                    order_hold_exe_id = df_order.loc[r,'hold_exe_id']
                     #if order_idのpriceはhigh-lowの範囲？
                     if order_price <= high_price and order_price >= low_price:
                         match app_rtype:
                             case 'simu':
-                                #create exe
-                                #def::::trade_id, phase_e, order_id, 
-                                #def::::otype, exe_price, quantity, status_e, 
-                                #def::::pf_order_number, close_order_id, run_date_e
-                                TBL_VAL.tbl_ins_exe(trade_id, '1a', order_id, 
-                                        'buy', order_price, order_quantity, 'hold', 
-                                        order_pf_order_number, '', date)
-                                #selct exe
-                                list = TBL_VAL.tbl_exe_latest(trade_id, order_id)
-                                exe_id, exe_trade_id, phase_e, exe_order_id, exe_price, \
-                                    exe_quantity, exe_pf_order_number = \
-                                    list[0], list[1], list[2], list[3], list[4], list[5], list[6]
+                                #orderのhold_exe_idから対のbuyのexe特定
+                                #diff::::trade_id, order_id
+                                exe_id = TBL_VAL.tbl_exe_select_o_id(trade_id, order_hold_exe_id)
 
-                                #update fund
-                                #fundで最新より1つ前のrを取得
-                                fund_before_r_funds = TBL_VAL.tbl_before_fund_r_funds(trade_id)
-                                #あとは新規order時のように算出してupdate
-                                tmp_r_funds = \
-                                fund_before_r_funds - int((order_price * ex_rate) * order_quantity)
-                                tmp_diff_funds = tmp_r_funds - fund_before_r_funds
-                                TBL_VAL.tbl_upd_fund_rdiff_funds(trade_id, 
-                                order_id, exe_id, tmp_r_funds, tmp_diff_funds, date)
-
-                                #update trade （都度指定）
-                                #def::::trade_id, trade_phase, end_of_turn
-                                TBL_VAL.tbl_upd_trade_after_exe(trade_id, 1, 1)
-
-                                #update order status_o=off
-                                TBL_VAL.tbl_upd_order_after_exe(order_id, 'off', date)
-                            case 'real':
-                                print('あとで実装')
-
-            #get latest values
-            list=TBL_VAL.tbl_trade_single(ticker)
-            trade_id, trade_phase, trade_last_run_date, trade_end_of_turn, \
-            trade_initial_fund_id, trade_fund_id, trade_in_residual_funds = \
-                list[0], list[1], list[2], list[3], list[4], list[5], list[6]
-            try:
-                #（都度指定）必要な各tableのphase指定が必要
-                list = TBL_VAL.tbl_order_single(trade_id,1,'1a') #trade_id,trade_phase,order_pahase
-                order_id, order_price, order_quantity, order_pf_order_number = \
-                    list[0], list[1], list[2], list[3]
-            except TypeError:
-                order_id = None
-            #selct exe（都度指定）
-            list = TBL_VAL.tbl_exe_single(trade_id, 1, 'hold') #trade_id, phase_e, status_e
-            exe_id, exe_trade_id, phase_e, exe_order_id, exe_price, \
-                exe_quantity, exe_pf_order_number = \
-                list[0], list[1], list[2], list[3], list[4], list[5], list[6]
-
-
-            #既存orderの確認 buy増し
-            if not order_id is None: #o idはnoneじゃない？
-                tmp_edit_price=0
-                #Y:（既存orderの価格訂正）
-                #（無駄scrape減　誤差なら無視）
-                tmp_edit_price=0
-                if c_price <= exe_price:
-                    tmp_order_price = c_price * 0.997
-                    if order_price >= tmp_order_price * 1.042:
-                        tmp_edit_price=1
-                    if order_price <= tmp_order_price * 0.968:
-                        tmp_edit_price=1
-                else:
-                    tmp_order_price = exe_price * 0.997
-                    if order_price >= tmp_order_price * 1.042:
-                        tmp_edit_price=1
-                    if order_price <= tmp_order_price * 0.968:
-                        tmp_edit_price=1
-                tmp_order_price = '{:.2f}'.format(tmp_order_price)#小数点2位まで
-                tmp_order_price = float(tmp_order_price)#何故かstrになったのでfloatへ
-                #価格訂正(誤差じゃない) buy増し
-                if tmp_edit_price == 1:
-                    match app_rtype:
-                        case 'simu':
-                            #update order
-                            TBL_VAL.tbl_upd_order_price(order_id,tmp_order_price, date)
-                            #update fund
-                            #fundで最新より1つ前のrを取得
-                            fund_before_r_funds = TBL_VAL.tbl_before_fund_r_funds(trade_id)
-                            #あとは新規order時のように算出してupdate
-                            tmp_r_funds = \
-                                fund_before_r_funds - int((tmp_order_price * ex_rate) * order_quantity)
-                            tmp_diff_funds = tmp_r_funds - fund_before_r_funds
-                            TBL_VAL.tbl_upd_fund_rdiff_funds(trade_id, 
-                                order_id,tmp_r_funds, tmp_diff_funds, date)
-                        case 'real':
-                            print('あとで実装')
-            elif trade_phase == '1':#約定前と約定後の分岐に対応(order無い＆trade p1)
-                #新規order buy増し
-                #追加buy資金がある？あるなら何度でも追加buy実行
-                fund_r_funds = TBL_VAL.tbl_fund_r_funds(trade_id)
-                if fund_r_funds / ex_rate > c_price * 1.01:
-                    #資金はある
-                    #指値の決定
-                    if c_price <= exe_price:
-                        tmp_order_price = c_price * 0.997
-                    else:
-                        tmp_order_price = exe_price * 0.997
-                    tmp_order_price = '{:.2f}'.format(tmp_order_price)#小数点2位まで
-                    tmp_order_price = float(tmp_order_price)#何故かstrになったのでfloatへ
-                    #数量の決定
-                    import math
-                    if trade_in_residual_funds * 0.1 <= fund_r_funds:
-                        #in_fundの10%で数量設定
-                        tmp_ok_buy_funds = int((trade_in_residual_funds * 0.5) / ex_rate)
-                        tmp_order_quantity = int(tmp_ok_buy_funds / tmp_order_price)
-                    else:
-                        #in_fundの10%以下。fund残金すべてで数量設定
-                        tmp_ok_buy_funds = int(fund_r_funds / ex_rate)
-                        tmp_order_quantity = int(tmp_ok_buy_funds / tmp_order_price)
-                    #新規order
-                    match app_rtype:
-                            case 'simu':
-                                #simuなので架空のSEC注文番号を生成
-                                tmp_pf_order_number = TBL_VAL.GetRandomStr(10)
-                                #create order
-                                #def::::trade_id, phase_o, status_o,otype, 
-                                #def::::order_price, quantity, pf_order_number
-                                TBL_VAL.tbl_ins_order(trade_id, '1a', 'on', 'buy', 
-                                        tmp_order_price, tmp_order_quantity, 
-                                        tmp_pf_order_number, date)
-                                #get lasted order_id必要
-                                list = TBL_VAL.tbl_order_single(trade_id,0,1) #trade_id,trade_phase,order_pahase
-                                order_id, order_price, order_quantity, order_pf_order_number = \
-                                list[0], list[1], list[2], list[3]
-                                #create fund
-                                tmp_r_funds = \
-                                    fund_r_funds - int((tmp_order_price * ex_rate) * tmp_order_quantity)
-                                tmp_diff_funds = tmp_r_funds - fund_r_funds
-                                #def:::trade_id, order_id, exe_id, rtype, ticker, 
-                                #def:::status_f, residual_funds, update_diff_funds, run_date_f
-                                TBL_VAL.tbl_ins_fund(trade_id, order_id, 0, app_rtype, ticker, 
-                                        'on', tmp_r_funds, tmp_diff_funds, date)
-                            case 'real':
-                                print('あとで実装')
-        
-        #現在価格は移動平均線より上?-----------------------------
-        #get latest values
-        list=TBL_VAL.tbl_trade_single(ticker)
-        trade_id, trade_phase, trade_last_run_date, trade_end_of_turn, \
-        trade_initial_fund_id, trade_fund_id, trade_in_residual_funds = \
-            list[0], list[1], list[2], list[3], list[4], list[5], list[6]
-
-        try:
-            #（都度指定）必要な各tableのphase指定が必要
-            list = TBL_VAL.tbl_order_single(trade_id,1,'2') #trade_id,trade_phase,order_pahase
-            order_id, order_price, order_quantity, order_pf_order_number = \
-                list[0], list[1], list[2], list[3]
-        except TypeError:   
-            order_id = None
-
-        #selct exe（都度指定）
-        list = TBL_VAL.tbl_exe_single(trade_id, 1, 'hold') #trade_id, phase_e, status_e
-        exe_id, exe_trade_id, phase_e, exe_order_id, exe_price, \
-            exe_quantity, exe_pf_order_number = \
-            list[0], list[1], list[2], list[3], list[4], list[5], list[6]
-
-        #現在価格は移動平均線より上?
-        if c_price >= mov_avg:
-            #約定確認　初回50％sell order
-            if not order_id is None: #o idはnoneじゃない？
-                list = [order_id]
-                for i in list:
-                    #if order_idのpriceはhigh-lowの範囲？
-                    if order_price <= high_price and order_price >= low_price:
-                        match app_rtype:
-                            case 'simu':
                                 #upd exe 今回sellの遂になるbuyのexeの
                                 # status_e = close、close_order_id
                                 #def::::exe_id, status_e, close_order_id
@@ -249,7 +117,7 @@ class STAGE_C():
                                 #def::::trade_id, phase_e, order_id, 
                                 #def::::otype, exe_price, quantity, status_e, 
                                 #def::::pf_order_number, close_order_id, run_date_e
-                                TBL_VAL.tbl_ins_exe(trade_id, '2', order_id, 
+                                TBL_VAL.tbl_ins_exe(trade_id, '2a', order_id, 
                                         'sell', order_price, order_quantity, 'close', 
                                         order_pf_order_number, order_id, date)
                                 #selct exe
@@ -257,91 +125,274 @@ class STAGE_C():
                                 exe_id, exe_trade_id, phase_e, exe_order_id, exe_price, \
                                     exe_quantity, exe_pf_order_number = \
                                     list[0], list[1], list[2], list[3], list[4], list[5], list[6]
+
+                                #最新fund取得
+                                fund_r_funds = TBL_VAL.tbl_fund_r_funds(trade_id)
+
                                 #create fund
                                 tmp_r_funds = \
-                                    fund_r_funds + int((tmp_order_price * ex_rate) * tmp_order_quantity)
+                                    fund_r_funds + int((order_price * ex_rate) * order_quantity)
                                 tmp_diff_funds = tmp_r_funds - fund_r_funds
                                 #def:::trade_id, order_id, exe_id, rtype, ticker, 
                                 #def:::status_f, residual_funds, update_diff_funds, run_date_f
                                 TBL_VAL.tbl_ins_fund(trade_id, order_id, exe_id, app_rtype, ticker, 
-                                        'on', tmp_r_funds, tmp_diff_funds, date)
-
-                                #update trade （都度指定）
-                                #def::::trade_id, trade_phase, end_of_turn
-                                TBL_VAL.tbl_upd_trade_after_exe(trade_id, 2, 1)
+                                    'on', tmp_r_funds, tmp_diff_funds, date)
 
                                 #update order status_o=off
                                 TBL_VAL.tbl_upd_order_after_exe(order_id, 'off', date)
-
                             case 'real':
                                 print('あとで実装')
-
-
-                        #buy増し注文の破棄。初回sell50％売れた時点で未約定のbuy増しは注文取消
-                        #order_id_list へ代入
-                        try:
-                            #（都度指定）必要な各tableのphase指定が必要
-                            order_id_list = TBL_VAL.tbl_order_list(trade_id,2,'1a') #trade_id,trade_phase,order_pahase
-                        except TypeError:
-                            order_id_list = None
-
-                        #buy増し注文の破棄
-                        if not order_id_list is None: #o idはnoneじゃない？
-                            for order_id in order_id_list:
-                                match app_rtype:
-                                    case 'simu':
-                                        #fundのorder_idのdiff取得
-                                        tmp_diff_funds = TBL_VAL.tbl_fund_select_o_id(trade_id,order_id)
-                                        #マイナスなので正の整数化
-                                        tmp_diff_funds = tmp_diff_funds * -1
-                                        #最新fund取得
-                                        fund_r_funds = TBL_VAL.tbl_fund_r_funds(trade_id)
-                                        #create fund
-                                        tmp_r_funds = fund_r_funds + tmp_diff_funds
-                                        #def:::trade_id, order_id, exe_id, rtype, ticker, 
-                                        #def:::status_f, residual_funds, update_diff_funds, run_date_f
-                                        TBL_VAL.tbl_ins_fund(trade_id, order_id, 0, app_rtype, ticker, 
-                                                'on', tmp_r_funds, tmp_diff_funds, date)
-                                        #update order status_o=off
-                                        TBL_VAL.tbl_upd_order_after_exe(order_id, 'off', date)
-                                    case 'real':
-                                        print('あとで実装')
-
-
 
             #get latest values
             list=TBL_VAL.tbl_trade_single(ticker)
             trade_id, trade_phase, trade_last_run_date, trade_end_of_turn, \
-            trade_initial_fund_id, trade_fund_id, trade_in_residual_funds = \
-                list[0], list[1], list[2], list[3], list[4], list[5], list[6]
+            trade_initial_fund_id, trade_fund_id, trade_in_residual_funds, \
+            trade_logic_ver = \
+                list[0], list[1], list[2], list[3], list[4], list[5], list[6], list[7]
+
             try:
                 #（都度指定）必要な各tableのphase指定が必要
-                list = TBL_VAL.tbl_order_single(trade_id,1,'2') #trade_id,trade_phase,order_pahase
+                list = TBL_VAL.tbl_order_single(trade_id,1,'1a') #trade_id,trade_phase,order_pahase
                 order_id, order_price, order_quantity, order_pf_order_number = \
                     list[0], list[1], list[2], list[3]
             except TypeError:
                 order_id = None
+
             #selct exe（都度指定）
             list = TBL_VAL.tbl_exe_single(trade_id, 1, 'hold') #trade_id, phase_e, status_e
             exe_id, exe_trade_id, phase_e, exe_order_id, exe_price, \
                 exe_quantity, exe_pf_order_number = \
                 list[0], list[1], list[2], list[3], list[4], list[5], list[6]
+            
+            #最新fund取得
+            fund_r_funds = TBL_VAL.tbl_fund_r_funds(trade_id)
+            fund_id = tbl_fund_latest(trade_id)
+
+            #すべて約定？ sell 2a
+            tmp_count = TBL_VAL.tbl_count_o_e_active(trade_id)
+            if tmp_count == 0:
+                #tradeの終了処理
+
+                #update trade （都度指定）
+                #def::::trade_id, trade_phase, status, end_of_turn
+                TBL_VAL.tbl_upd_trade_finish(trade_id, 3, 'off', 1)
+
+                #trade_results用に変数作成
+                tmp_start_funds = TBL_VAL.tbl_fund_select_f_id(trade_initial_fund_id) #fund_id
+                temp_real_gal = fund_r_funds - tmp_start_funds
+                tmp_roi = temp_real_gal / tmp_start_funds
+
+                #ins trade_results
+                #diff::::trade_id, ticker, rtype, start_funds, 
+                #diff::::last_funds, realized_gain_and_loss, roi, run_date_r
+                TBL_VAL.tbl_ins_trade_results(trade_id, ticker, app_rtype, tmp_start_funds, \
+                    fund_r_funds, temp_real_gal, tmp_roi, date)
+
+                #ins trade（次回用）
+                #diff::::rtype, initial_fund_id, phase, status, ticker, logic_ver
+                TBL_VAL.tbl_ins_trade(app_rtype, fund_id, '0', 'on', \
+                    ticker, trade_logic_ver)
+
+                #loop終了
+
+            #get latest values
+            #select order
+            try:
+                #（都度指定）必要な各tableのphase指定が必要
+                #diff::::trade_id,trade_phase,order_pahase
+                df_order = TBL_VAL.tbl_order_df(trade_id,2,'2a') 
+            except TypeError:
+                df_order = None
 
 
-            #既存orderの確認　初回50％sell order
-            if not order_id is None: #o idはnoneじゃない？
-                tmp_edit_price=0
+            #sell 2a全決済　＝価格変更。処分目的で発注済みorderの指値をc_priceに変更すること
+            if not df_order is None: #o idはnoneじゃない？
+                for r in df_order:
+                    #df_orderから取り出し
+                    order_id = df_order.loc[r,'order_id']
+                    order_pf_order_number= df_order.loc[r,'pf_order_number']
+                    #指値決定
+                    tmp_order_price = c_price * 0.997
+                    tmp_order_price = '{:.2f}'.format(tmp_order_price)#小数点2位まで
+                    tmp_order_price = float(tmp_order_price)#何故かstrになったのでfloatへ
+                    #価格訂正(分岐は無い。実行)
+                    match app_rtype:
+                        case 'simu':
+                            #update order
+                            TBL_VAL.tbl_upd_order_price(order_id,tmp_order_price, date)
+                        case 'real':
+                            print('あとで実装')
+
+
+        #現在価格は移動平均線より上?-----------------------------
+        #get latest values
+        list=TBL_VAL.tbl_trade_single(ticker)
+        trade_id, trade_phase, trade_last_run_date, trade_end_of_turn, \
+        trade_initial_fund_id, trade_fund_id, trade_in_residual_funds = \
+            list[0], list[1], list[2], list[3], list[4], list[5], list[6]
+
+        #select order
+        try:
+            #（都度指定）必要な各tableのphase指定が必要
+            #diff::::trade_id,trade_phase,order_pahase
+            df_order = TBL_VAL.tbl_order_df(trade_id,2,'2a') 
+        except TypeError:
+            df_order = None
+
+        #selct exe（都度指定）
+        list = TBL_VAL.tbl_exe_single(trade_id, 2, 'close') #trade_id, phase_e, status_e
+        exe_id, exe_trade_id, phase_e, exe_order_id, exe_price, \
+            exe_quantity, exe_pf_order_number = \
+            list[0], list[1], list[2], list[3], list[4], list[5], list[6]
+
+        #現在価格は移動平均線より上?
+        #約定確認 sell 2a 全決済
+        if not df_order is None: #o idはnoneじゃない？
+            for r in df_order:
+                #df_orderから取り出し
+                order_id = df_order.loc[r,'order_id']
+                order_price = df_order.loc[r,'order_price']
+                order_quantity = df_order.loc[r,'quantity']
+                order_pf_order_number= df_order.loc[r,'pf_order_number']
+                order_hold_exe_id = df_order.loc[r,'hold_exe_id']
+                #if order_idのpriceはhigh-lowの範囲？
+                if order_price <= high_price and order_price >= low_price:
+                    match app_rtype:
+                        case 'simu':
+                            #orderのhold_exe_idから対のbuyのexe特定
+                            #diff::::trade_id, order_id
+                            exe_id = TBL_VAL.tbl_exe_select_o_id(trade_id, order_hold_exe_id)
+
+                            #upd exe 今回sellの遂になるbuyのexeの
+                            # status_e = close、close_order_id
+                            #def::::exe_id, status_e, close_order_id
+                            TBL_VAL.tbl_upd_exe_fin_buy_info(exe_id, 'close', order_id)
+
+                            #create exe
+                            #def::::trade_id, phase_e, order_id, 
+                            #def::::otype, exe_price, quantity, status_e, 
+                            #def::::pf_order_number, close_order_id, run_date_e
+                            TBL_VAL.tbl_ins_exe(trade_id, '2a', order_id, 
+                                    'sell', order_price, order_quantity, 'close', 
+                                    order_pf_order_number, order_id, date)
+                            #selct exe
+                            list = TBL_VAL.tbl_exe_latest(trade_id, order_id)
+                            exe_id, exe_trade_id, phase_e, exe_order_id, exe_price, \
+                                exe_quantity, exe_pf_order_number = \
+                                list[0], list[1], list[2], list[3], list[4], list[5], list[6]
+
+                            #最新fund取得
+                            fund_r_funds = TBL_VAL.tbl_fund_r_funds(trade_id)
+
+                            #create fund
+                            tmp_r_funds = \
+                                fund_r_funds + int((order_price * ex_rate) * order_quantity)
+                            tmp_diff_funds = tmp_r_funds - fund_r_funds
+                            #def:::trade_id, order_id, exe_id, rtype, ticker, 
+                            #def:::status_f, residual_funds, update_diff_funds, run_date_f
+                            TBL_VAL.tbl_ins_fund(trade_id, order_id, exe_id, app_rtype, ticker, 
+                                'on', tmp_r_funds, tmp_diff_funds, date)
+
+                            #update order status_o=off
+                            TBL_VAL.tbl_upd_order_after_exe(order_id, 'off', date)
+                        case 'real':
+                            print('あとで実装')
+
+        #get latest values
+        list=TBL_VAL.tbl_trade_single(ticker)
+        trade_id, trade_phase, trade_last_run_date, trade_end_of_turn, \
+        trade_initial_fund_id, trade_fund_id, trade_in_residual_funds, \
+        trade_logic_ver = \
+            list[0], list[1], list[2], list[3], list[4], list[5], list[6], list[7]
+
+        try:
+            #（都度指定）必要な各tableのphase指定が必要
+            list = TBL_VAL.tbl_order_single(trade_id,1,'1a') #trade_id,trade_phase,order_pahase
+            order_id, order_price, order_quantity, order_pf_order_number = \
+                list[0], list[1], list[2], list[3]
+        except TypeError:
+            order_id = None
+
+        #selct exe（都度指定）
+        list = TBL_VAL.tbl_exe_single(trade_id, 2, 'hold') #trade_id, phase_e, status_e
+        exe_id, exe_trade_id, phase_e, exe_order_id, exe_price, \
+            exe_quantity, exe_pf_order_number = \
+            list[0], list[1], list[2], list[3], list[4], list[5], list[6]
+        
+        #最新fund取得
+        fund_r_funds = TBL_VAL.tbl_fund_r_funds(trade_id)
+        fund_id = tbl_fund_latest(trade_id)
+
+        #すべて約定？ sell 2a
+        tmp_count = TBL_VAL.tbl_count_o_e_active(trade_id)
+        if tmp_count == 0:
+            #tradeの終了処理
+
+            #update trade （都度指定）
+            #def::::trade_id, trade_phase, status, end_of_turn
+            TBL_VAL.tbl_upd_trade_finish(trade_id, 3, 'off', 1)
+
+            #trade_results用に変数作成
+            tmp_start_funds = TBL_VAL.tbl_fund_select_f_id(trade_initial_fund_id) #fund_id
+            temp_real_gal = fund_r_funds - tmp_start_funds
+            tmp_roi = temp_real_gal / tmp_start_funds
+
+            #ins trade_results
+            #diff::::trade_id, ticker, rtype, start_funds, 
+            #diff::::last_funds, realized_gain_and_loss, roi, run_date_r
+            TBL_VAL.tbl_ins_trade_results(trade_id, ticker, app_rtype, tmp_start_funds, \
+                fund_r_funds, temp_real_gal, tmp_roi, date)
+
+            #ins trade（次回用）
+            #diff::::rtype, initial_fund_id, phase, status, ticker, logic_ver
+            TBL_VAL.tbl_ins_trade(app_rtype, fund_id, '0', 'on', \
+                ticker, trade_logic_ver)
+
+            #loop終了
+
+
+
+        #get latest values
+        list=TBL_VAL.tbl_trade_single(ticker)
+        trade_id, trade_phase, trade_last_run_date, trade_end_of_turn, \
+        trade_initial_fund_id, trade_fund_id, trade_in_residual_funds = \
+            list[0], list[1], list[2], list[3], list[4], list[5], list[6]
+
+        #select order
+        try:
+            #（都度指定）必要な各tableのphase指定が必要
+            #diff::::trade_id,trade_phase,order_pahase
+            df_order = TBL_VAL.tbl_order_df(trade_id,2,'2a') 
+        except TypeError:
+            df_order = None
+
+        #selct exe（都度指定）
+        list = TBL_VAL.tbl_exe_single(trade_id, 2, 'close') #trade_id, phase_e, status_e
+        exe_id, exe_trade_id, phase_e, exe_order_id, exe_price, \
+            exe_quantity, exe_pf_order_number = \
+            list[0], list[1], list[2], list[3], list[4], list[5], list[6]
+
+
+        #既存orderの確認　sell増し
+        if not df_order is None: #o idはnoneじゃない？
+            for r in df_order:
+                #df_orderから取り出し
+                order_id = df_order.loc[r,'order_id']
+                order_price = df_order.loc[r,'order_price']
+                order_quantity = df_order.loc[r,'quantity']
+                order_pf_order_number= df_order.loc[r,'pf_order_number']
+                order_hold_exe_id = df_order.loc[r,'hold_exe_id']
                 #Y:（既存orderの価格訂正）
                 #（無駄scrape減　誤差なら無視）
                 tmp_edit_price=0
-                if c_price >= bb_highs:
+                if c_price >= exe_price:
                     tmp_order_price = c_price * 1.003
                     if order_price >= tmp_order_price * 1.042:
                         tmp_edit_price=1
                     if order_price <= tmp_order_price * 0.968:
                         tmp_edit_price=1
                 else:
-                    tmp_order_price = bb_highs
+                    tmp_order_price = exe_price
                     if order_price >= tmp_order_price * 1.042:
                         tmp_edit_price=1
                     if order_price <= tmp_order_price * 0.968:
@@ -356,17 +407,34 @@ class STAGE_C():
                             TBL_VAL.tbl_upd_order_price(order_id,tmp_order_price, date)
                         case 'real':
                             print('あとで実装')
-            elif trade_phase == '1':#約定前と約定後の分岐に対応(order無い＆trade p1)
-                #新規order　初回50％sell order
+
+        elif trade_phase == '2':#約定前と約定後の分岐に対応(order無い＆trade p1)
+            #新規order sell増し 2a
+            #selct exe（都度指定）
+            try:
+                list = TBL_VAL.tbl_exe_min_price(trade_id, '1a', 'hold') #trade_id, phase_e, status_e
+                m_exe_id, m_exe_trade_id, m_phase_e, m_exe_order_id, m_exe_price, \
+                    m_exe_quantity, m_exe_pf_order_number, m_exe_create_time = \
+                    list[0], list[1], list[2], list[3], list[4], list[5], list[6], list[7]
+            except TypeError:
+                m_exe_id = None
+            #exeのstatus_e=holdがある？あればsell増し続行            
+            if not m_exe_id is None: #o idはnoneじゃない？
+                #exe holdはある
+                #selct exe（都度指定）
+                list = TBL_VAL.tbl_exe_single(trade_id, 2, 'close') #trade_id, phase_e, status_e
+                exe_id, exe_trade_id, phase_e, exe_order_id, exe_price, \
+                    exe_quantity, exe_pf_order_number = \
+                    list[0], list[1], list[2], list[3], list[4], list[5], list[6]
                 #指値の決定
-                if c_price >= bb_highs:
+                if c_price >= exe_price:
                     tmp_order_price = c_price * 1.003
                 else:
-                    tmp_order_price = bb_highs
+                    tmp_order_price = exe_price
                 tmp_order_price = '{:.2f}'.format(tmp_order_price)#小数点2位まで
                 tmp_order_price = float(tmp_order_price)#何故かstrになったのでfloatへ
                 #数量の決定
-                tmp_order_quantity = exe_quantity
+                tmp_order_quantity = m_exe_quantity
                 #新規order
                 match app_rtype:
                         case 'simu':
@@ -375,9 +443,9 @@ class STAGE_C():
                             #create order
                             #def::::trade_id, phase_o, status_o,otype, 
                             #def::::order_price, quantity, pf_order_number
-                            TBL_VAL.tbl_ins_order(trade_id, '2', 'on', 'sell', 
+                            TBL_VAL.tbl_ins_order(trade_id, '2a', 'on', 'sell', 
                                     tmp_order_price, tmp_order_quantity, 
-                                    tmp_pf_order_number, date)
+                                    tmp_pf_order_number, m_exe_order_id, date)
                         case 'real':
                             print('あとで実装')
         

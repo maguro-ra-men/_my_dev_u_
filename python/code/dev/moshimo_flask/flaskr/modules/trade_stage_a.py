@@ -175,7 +175,7 @@ class STAGE_A():
                         #def::::order_price, quantity, pf_order_number
                         TBL_VAL.tbl_ins_order(trade_id, 1, 'on', 'buy', 
                                 tmp_order_price, tmp_order_quantity, 
-                                tmp_pf_order_number, date)
+                                tmp_pf_order_number, '', date)
                         #get lasted order_id必要
                         list = TBL_VAL.tbl_order_single(trade_id,0,1) #trade_id,trade_phase,order_pahase
                         order_id, order_price, order_quantity, order_pf_order_number = \
