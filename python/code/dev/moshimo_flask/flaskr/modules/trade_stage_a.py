@@ -9,8 +9,8 @@ sys.path.append(f"{rootpath}")
 
 #loging
 from logging import getLogger,config
-from conf.logger_conf import *
-logger = getLogger(__name__)
+import logging
+from conf.logger_conf import * #my module
 
 #my module
 from conf.db import engine,session
@@ -41,23 +41,19 @@ class STAGE_A():
         trade_initial_fund_id, trade_fund_id, trade_in_residual_funds = \
             list[0], list[1], list[2], list[3], list[4], list[5], list[6]
 
-        try:
-            list = TBL_VAL.tbl_order_single(trade_id,0,1) #trade_id,trade_phase,order_pahase
-            order_id, order_price, order_quantity, order_pf_order_number = \
-                list[0], list[1], list[2], list[3]
-        except TypeError:
-            pass
+        #select order
+        list = TBL_VAL.tbl_order_single(trade_id,0,1) #trade_id,trade_phase,order_pahase
+        order_id, order_price, order_quantity, order_pf_order_number = \
+            list[0], list[1], list[2], list[3]
+
 
         #1日1回しか売買しないので状態チェック
         if trade_end_of_turn == 1:
             #loop終了
-            print('loop終了')
+            logger.debug(f'return trade_end_of_turn = 1')
+            return
 
-        #約定確認　エラー回避策
-        try:
-            order_id in globals() #o idは定義済み？
-        except NameError:
-            order_id = None
+
         #約定確認
         if not order_id is None: #o idはnoneじゃない？
             list = [order_id]
@@ -103,12 +99,11 @@ class STAGE_A():
         trade_id, trade_phase, trade_last_run_date, trade_end_of_turn, \
         trade_initial_fund_id, trade_fund_id, trade_in_residual_funds = \
             list[0], list[1], list[2], list[3], list[4], list[5], list[6]
-        try:
-            list = TBL_VAL.tbl_order_single(trade_id,0,1) #trade_id,trade_phase,order_pahase
-            order_id, order_price, order_quantity, order_pf_order_number = \
-                list[0], list[1], list[2], list[3]
-        except TypeError:
-            pass
+        #select order
+        list = TBL_VAL.tbl_order_single(trade_id,'0','1') #trade_id,trade_phase,order_pahase
+        order_id, order_price, order_quantity, order_pf_order_number = \
+            list[0], list[1], list[2], list[3]
+
 
         #既存orderの確認
         if not order_id is None: #o idはnoneじゃない？
@@ -143,19 +138,26 @@ class STAGE_A():
                         tmp_r_funds = \
                             fund_before_r_funds - int((tmp_order_price * ex_rate) * order_quantity)
                         tmp_diff_funds = tmp_r_funds - fund_before_r_funds
-                        TBL_VAL.tbl_upd_fund_rdiff_funds(trade_id, 
-                            order_id,tmp_r_funds, tmp_diff_funds, date)
+                        TBL_VAL.tbl_upd_fund_rdiff_funds(trade_id, \
+                            order_id,0,tmp_r_funds, tmp_diff_funds, date)
                     case 'real':
                         print('あとで実装')
         elif trade_phase == '0':#約定前と約定後の分岐に対応(order無い＆trade p0)
             #新規order
             #最低限stock買える資金がない？
             fund_r_funds = TBL_VAL.tbl_fund_r_funds(trade_id)
+            fund_id = TBL_VAL.tbl_fund_latest(trade_id)
             if not fund_r_funds / ex_rate > c_price * 1.03:
-                print('loop終了 fund不足。1つも買えない。trade不可能')
+                #loop終了
+                logger.debug(f'return fund不足。1つも買えない。trade不可能')
+                return
+
             #追加buy資金がない？
             if not fund_r_funds * 0.5 / ex_rate > c_price * 5:
-                print('loop終了 fund不足。phase1a追加buy不可につきtrade停止')
+                #loop終了
+                logger.debug(f'return fund不足。phase1a追加buy不可につきtrade停止')
+                return
+
             #新規order
             if c_price <= bb_lows:
                 tmp_order_price = c_price * 0.997
@@ -175,9 +177,9 @@ class STAGE_A():
                         #def::::order_price, quantity, pf_order_number
                         TBL_VAL.tbl_ins_order(trade_id, 1, 'on', 'buy', 
                                 tmp_order_price, tmp_order_quantity, 
-                                tmp_pf_order_number, '', date)
+                                tmp_pf_order_number, 0, date)
                         #get lasted order_id必要
-                        list = TBL_VAL.tbl_order_single(trade_id,0,1) #trade_id,trade_phase,order_pahase
+                        list = TBL_VAL.tbl_order_single(trade_id,'0','1') #trade_id,trade_phase,order_phase
                         order_id, order_price, order_quantity, order_pf_order_number = \
                         list[0], list[1], list[2], list[3]
                         #create fund
@@ -188,6 +190,8 @@ class STAGE_A():
                         #def:::status_f, residual_funds, update_diff_funds, run_date_f
                         TBL_VAL.tbl_ins_fund(trade_id, order_id, 0, app_rtype, ticker, 
                                 'on', tmp_r_funds, tmp_diff_funds, date)
+                        #update fund status_f=off
+                        TBL_VAL.tbl_upd_fund_after_ins(fund_id, 'off', date)
                     case 'real':
                         print('あとで実装')
 

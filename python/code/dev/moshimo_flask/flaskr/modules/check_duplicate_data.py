@@ -6,8 +6,10 @@ sys.path.append(f"{rootpath}")
 
 #loging
 from logging import getLogger,config
-from conf.logger_conf import *
-logger = getLogger(__name__)
+import logging
+from conf.logger_conf import * #my module
+
+
 
 #2.Check duplicate data.
 #my module

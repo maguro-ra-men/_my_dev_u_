@@ -9,8 +9,8 @@ sys.path.append(f"{rootpath}")
 
 #loging
 from logging import getLogger,config
-from conf.logger_conf import *
-logger = getLogger(__name__)
+import logging
+from conf.logger_conf import * #my module
 
 #my module
 from conf.db import engine,session
@@ -52,7 +52,8 @@ class STAGE_B():
         #1日1回しか売買しないので状態チェック
         if trade_end_of_turn == 1:
             #loop終了
-            print('loop終了')
+            logger.debug(f'return trade_end_of_turn = 1')
+            return
         
         #現在価格は移動平均線より下?-----------------------------
         if c_price <= mov_avg:
@@ -64,7 +65,7 @@ class STAGE_B():
             except NameError:
                 order_id = None
             """
-            #約定確認 buy増し
+            #約定確認 buy増し(1a order中は1つしか存在しない)
             if not order_id is None: #o idはnoneじゃない？
                 list = [order_id]
                 for i in list:
@@ -123,7 +124,7 @@ class STAGE_B():
                 list[0], list[1], list[2], list[3], list[4], list[5], list[6]
 
 
-            #既存orderの確認 buy増し
+            #既存orderの確認 buy増し(1a order中は1つしか存在しない)
             if not order_id is None: #o idはnoneじゃない？
                 tmp_edit_price=0
                 #Y:（既存orderの価格訂正）
@@ -164,6 +165,7 @@ class STAGE_B():
                 #新規order buy増し
                 #追加buy資金がある？あるなら何度でも追加buy実行
                 fund_r_funds = TBL_VAL.tbl_fund_r_funds(trade_id)
+                fund_id = TBL_VAL.tbl_fund_latest(trade_id)
                 if fund_r_funds / ex_rate > c_price * 1.01:
                     #資金はある
                     #指値の決定
@@ -193,7 +195,7 @@ class STAGE_B():
                                 #def::::order_price, quantity, pf_order_number
                                 TBL_VAL.tbl_ins_order(trade_id, '1a', 'on', 'buy', 
                                         tmp_order_price, tmp_order_quantity, 
-                                        tmp_pf_order_number, '', date)
+                                        tmp_pf_order_number, 0, date)
                                 #get lasted order_id必要
                                 list = TBL_VAL.tbl_order_single(trade_id,0,1) #trade_id,trade_phase,order_pahase
                                 order_id, order_price, order_quantity, order_pf_order_number = \
@@ -206,6 +208,9 @@ class STAGE_B():
                                 #def:::status_f, residual_funds, update_diff_funds, run_date_f
                                 TBL_VAL.tbl_ins_fund(trade_id, order_id, 0, app_rtype, ticker, 
                                         'on', tmp_r_funds, tmp_diff_funds, date)
+                                #update fund status_f=off
+                                TBL_VAL.tbl_upd_fund_after_ins(fund_id, 'off', date)
+
                             case 'real':
                                 print('あとで実装')
         
@@ -225,10 +230,15 @@ class STAGE_B():
             order_id = None
 
         #selct exe（都度指定）
-        list = TBL_VAL.tbl_exe_single(trade_id, 1, 'hold') #trade_id, phase_e, status_e
+        list = TBL_VAL.tbl_exe_single(trade_id, '1', 'hold') #trade_id, phase_e, status_e
         exe_id, exe_trade_id, phase_e, exe_order_id, exe_price, \
             exe_quantity, exe_pf_order_number = \
             list[0], list[1], list[2], list[3], list[4], list[5], list[6]
+
+        #最新fund取得
+        fund_r_funds = TBL_VAL.tbl_fund_r_funds(trade_id)
+        fund_id = TBL_VAL.tbl_fund_latest(trade_id)
+
 
         #現在価格は移動平均線より上?
         if c_price >= mov_avg:
@@ -265,6 +275,8 @@ class STAGE_B():
                                 #def:::status_f, residual_funds, update_diff_funds, run_date_f
                                 TBL_VAL.tbl_ins_fund(trade_id, order_id, exe_id, app_rtype, ticker, 
                                         'on', tmp_r_funds, tmp_diff_funds, date)
+                                #update fund status_f=off
+                                TBL_VAL.tbl_upd_fund_after_ins(fund_id, 'off', date)
 
                                 #update trade （都度指定）
                                 #def::::trade_id, trade_phase, end_of_turn
@@ -296,6 +308,10 @@ class STAGE_B():
                                         tmp_diff_funds = tmp_diff_funds * -1
                                         #最新fund取得
                                         fund_r_funds = TBL_VAL.tbl_fund_r_funds(trade_id)
+                                        #update fund status_f=off
+                                        fund_id = TBL_VAL.tbl_fund_latest(trade_id)
+                                        TBL_VAL.tbl_upd_fund_after_ins(fund_id, 'off', date)
+
                                         #create fund
                                         tmp_r_funds = fund_r_funds + tmp_diff_funds
                                         #def:::trade_id, order_id, exe_id, rtype, ticker, 
@@ -377,7 +393,7 @@ class STAGE_B():
                             #def::::order_price, quantity, pf_order_number
                             TBL_VAL.tbl_ins_order(trade_id, '2', 'on', 'sell', 
                                     tmp_order_price, tmp_order_quantity, 
-                                    tmp_pf_order_number, '', date)
+                                    tmp_pf_order_number, 0, date)
                         case 'real':
                             print('あとで実装')
         

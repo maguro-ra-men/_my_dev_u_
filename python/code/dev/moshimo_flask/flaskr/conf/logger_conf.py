@@ -20,3 +20,10 @@ filehandler.setFormatter(formatter)
 #logger.debug('testlog_debug')
 #logger.info('testlog_info')
 #logger.error('testlog_error')
+
+"""記入例
+logger.debug(f'trade_end_of_turn = 1')
+logger.error(f'2.Check duplicate data/error')
+logger.debug(f'')
+logger.error(f'')
+"""

@@ -65,3 +65,7 @@
 [2022-01-30 16:48:07,855][ERROR][2.Check duplicate data/error:tarade status on ,rtype=変数のtickerが2以上？][<stdin>]
 [2022-01-30 16:48:10,539][ERROR][2.Check duplicate data/error:tarade status on ,rtype=変数のtickerが2以上？][<stdin>]
 [2022-01-30 16:48:11,772][ERROR][2.Check duplicate data/error:tarade status on ,rtype=変数のtickerが2以上？][<stdin>]
+[2022-02-28 16:47:34,328][ERROR][2.Check duplicate data/error:config logic_verが2以上？][<stdin>]
+[2022-02-28 16:52:40,283][ERROR][2.Check duplicate data/error:config logic_verが2以上？][<stdin>]
+[2022-02-28 17:03:14,628][ERROR][test taro][<stdin>]
+[2022-02-28 17:03:45,472][ERROR][test taro][<stdin>]

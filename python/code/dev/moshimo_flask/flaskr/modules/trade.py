@@ -7,8 +7,8 @@ sys.path.append(f"{rootpath}")
 
 #loging
 from logging import getLogger,config
-from conf.logger_conf import *
-logger = getLogger(__name__)
+import logging
+from conf.logger_conf import * #my module
 
 #my module
 from conf.db import engine,session
@@ -36,11 +36,8 @@ query=f'select a.ticker, d.date, e.close as ex_rate, d.close as c_price,\
             GROUP by a.ticker,d.date\
             order by a.ticker,d.date asc'
 df_wlist = pd.read_sql_query(query, engine)
-#不要？？ df_wlist=df_wlist.rename_axis('index') #indexに名前を付ける
-#不要？？ df_wlist.to_csv(f'{rootpath}\\wlist.csv') 
 
-#不要？？ from modules.cls.t_val import T_R_VAL
-r=0 #あとで消す
+#ticker x dateでloop
 for r in df_wlist.index:
     ticker = df_wlist.loc[r,'ticker']
     ex_rate = df_wlist.loc[r,'ex_rate']
@@ -51,6 +48,15 @@ for r in df_wlist.index:
     bb_highs = df_wlist.loc[r,'bb_highs']
     bb_lows = df_wlist.loc[r,'bb_lows']
     date = df_wlist.loc[r,'date']
+
+    #ex_rateはnone？API起因で発生する為対処必要
+    for i in range(10):
+        i = i+1
+        if ex_rate == None:
+            ex_rate = df_wlist.loc[r+1,'ex_rate']
+        else:
+            break
+
     #out csv
     df=pd.DataFrame({
         'ticker': [f'{ticker}'], 'ex_rate': [f'{ex_rate}'],
@@ -63,33 +69,37 @@ for r in df_wlist.index:
     df.to_csv(f'{rootpath}\\one_day_wlist.csv') 
     #get latest values
     list=TBL_VAL.tbl_trade_single(ticker)
-    trade_id, trade_phase, trade_last_run_date, trade_end_of_turn = \
-        list[0], list[1], list[2], list[3]    
+    trade_id, trade_phase, trade_last_run_date, trade_end_of_turn, \
+    trade_initial_fund_id, trade_fund_id, trade_in_residual_funds = \
+        list[0], list[1], list[2], list[3], list[4], list[5], list[6] 
 
     if not date == trade_last_run_date: #trade保持のdateが異なる？
-        TBL_VAL.tbl_upd_trade_turn_start(ticker,date) #turn開始前にtrade idの3項目を更新。
+        #turn開始前にtrade idの3項目を更新。
+        TBL_VAL.tbl_upd_trade_turn_start(ticker,date) 
 
-    				
+    #tradeのinitial_fund_idが空？ならfund_idを挿入
+    if trade_initial_fund_id == None:
+        TBL_VAL.tbl_upd_trade_ini_f_id(trade_id, trade_fund_id)
 
 
-    #Trade stageへ
-    if trade_phase == '1xxxxxxxxxxxxxxxxxxxxxx': #trade phase=1.buy初回約定？
+
+    #Trade stageへ-------------------------
+    if trade_phase == '1': #trade phase=1.buy初回約定？
         from modules.trade_stage_b import STAGE_B #trade phase=0.約定ナシ？
         STAGE_B.b()
     else:
         print('end::::phase1_STAGE_B')
-
-    """ tradeが動く順番に作ろう
+    
     if trade_phase == '2': #trade phase=2.sell初回約定？
         from modules.trade_stage_c import STAGE_C #trade phase=0.約定ナシ？
         STAGE_C.c()
     else:
         print('end::::phase2_STAGE_C')
-    """
+    
     if trade_phase == '0': #trade phase=0.約定ナシ？
         from modules.trade_stage_a import STAGE_A
         STAGE_A.a()
     else:
         print('end::::phase0_STAGE_A')
-print(f'end::::trade date is {date}')
+print(f'end::::trade')
     

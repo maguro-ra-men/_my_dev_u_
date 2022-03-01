@@ -7,8 +7,8 @@ sys.path.append(f"{rootpath}")
 
 #loging
 from logging import getLogger,config
-from conf.logger_conf import *
-logger = getLogger(__name__)
+import logging
+from conf.logger_conf import * #my module
 
 #my module
 from conf.db import *
@@ -43,12 +43,15 @@ Run Common modules
 from modules.check_duplicate_data import check_results
 #print(check_results()) #チェック用
 if check_results() >= 1:
-    #sys.exit('error:table不整合')
-    print('y エラーあり 6あとでコメント外す↑')
+    print('error:table不整合')
+    sys.exit('error:')
 
 #3 fetch api data
-from modules.fetch_api_data import *
-
+try:
+    from modules.fetch_api_data import *
+except OperationalError:
+    print('error:fetch_api_data')
+    sys.exit('error:')
 
 #4.trade
 from modules.trade import *

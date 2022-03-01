@@ -1,5 +1,16 @@
 #csvのフォルダpath定義
 rootpath='C:\\Users\\kazu\\_my_dev_u_\\python\\code\\dev\\moshimo_flask\\flaskr'
+#pj用moduleのpython pathを通す。（os.path.dirname～～ではcdまでしか取れずNGだった）
+from locale import currency
+import sys
+sys.path.append(f"{rootpath}")
+
+#loging
+from logging import getLogger,config
+import logging
+from conf.logger_conf import * #my module
+
+
 import pandas as pd
 """
 定数を変数に代入
@@ -16,12 +27,27 @@ date rangeの確定
 """
 #app_drangeからgetする期間判定//tech chart算出の為、実際期間+21日必要。ざっくり多めに取る
 import datetime
+from datetime import date,timedelta
 from dateutil.relativedelta import relativedelta #～日後、ヶ月後を算出可能なライブラリ
+
+#jst0を跨ぐと日付変更してしまう為、実行日固定させる
+tmp_date = datetime.datetime.now()
+hour = tmp_date.hour
+reference_date = datetime.date.today()
+
+#日付変わった時間？
+if 0 <= hour <= 21:
+    # 日を求める timedelta
+    td = timedelta(days=1)
+    #前日を代入
+    reference_date = reference_date - td
+
+#global変数を定義
 if app_drange=='past6month':
-    tdate=datetime.date.today()
+    tdate=reference_date
     fdate = tdate.replace(day=1) + relativedelta(months=-7)
 elif app_drange=='today':
-    tdate=datetime.date.today()
+    tdate=reference_date
     fdate = tdate.replace(day=1) + relativedelta(months=-1)
 """
 API DATAからone dayで取り出した値を変数に代入

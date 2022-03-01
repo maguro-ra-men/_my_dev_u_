@@ -7,8 +7,8 @@ sys.path.append(f"{rootpath}")
 
 #loging
 from logging import getLogger,config
-from conf.logger_conf import *
-logger = getLogger(__name__)
+import logging
+from conf.logger_conf import * #my module
 
 #my module
 from conf.db import engine,session
@@ -31,6 +31,9 @@ query=f'select a.ticker  ,c.currency \
         b.status_f ="on" and b.rtype="{app_rtype}"\
         GROUP by c.ticker '
 df_wlist = pd.read_sql_query(query, engine)
+if df_wlist.empty:
+    logger.error(f'error:No valid trade and fund')
+    sys.exit('error:')
 
 #currency listを作成
 df_clist = df_wlist
@@ -210,6 +213,15 @@ df=df.drop(df.index[df['a_bb20ema'] == 0].values)
 #重複して不正なindexを振り直すべき
 df= df.reset_index() #add index（振り直し）
 df= df.drop(columns=['index'])  #元のindex列削除
+
+"""
+data check 
+    バッチ時間に関わらず、today dateがなければエラー
+"""
+if app_drange =='today':
+    if not tdate == df.loc[0,'date']: #todayの日付がstock apiにない？
+        print('error:stock apiにtoday dateが無い')
+        sys.exit('error:')  
 
 
 """

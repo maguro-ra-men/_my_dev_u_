@@ -9,8 +9,8 @@ sys.path.append(f"{rootpath}")
 
 #loging
 from logging import getLogger,config
-from conf.logger_conf import *
-logger = getLogger(__name__)
+import logging
+from conf.logger_conf import * #my module
 
 #my module
 from conf.db import engine,session
@@ -45,7 +45,8 @@ class STAGE_C():
         #1日1回しか売買しないので状態チェック
         if trade_end_of_turn == 1:
             #loop終了
-            print('loop終了')
+            logger.debug(f'return trade_end_of_turn = 1')
+            return
 
         #select order
         try:
@@ -90,9 +91,11 @@ class STAGE_C():
                 #def::::trade_id, trade_phase, end_of_turn
                 TBL_VAL.tbl_upd_trade_after_exe(trade_id, 2, 1)
                 #loop終了
+                logger.debug(f'return tmp_run_date = next_business_day')
+                return
             
             #約定確認 sell 2a 全決済
-            if not df_order is None: #o idはnoneじゃない？
+            if not df_order.empty: #o idはnoneじゃない？
                 for r in df_order:
                     #df_orderから取り出し
                     order_id = df_order.loc[r,'order_id']
@@ -125,6 +128,10 @@ class STAGE_C():
                                 exe_id, exe_trade_id, phase_e, exe_order_id, exe_price, \
                                     exe_quantity, exe_pf_order_number = \
                                     list[0], list[1], list[2], list[3], list[4], list[5], list[6]
+
+                                #update fund status_f=off
+                                fund_id = TBL_VAL.tbl_fund_latest(trade_id)
+                                TBL_VAL.tbl_upd_fund_after_ins(fund_id, 'off', date)
 
                                 #最新fund取得
                                 fund_r_funds = TBL_VAL.tbl_fund_r_funds(trade_id)
@@ -166,7 +173,7 @@ class STAGE_C():
             
             #最新fund取得
             fund_r_funds = TBL_VAL.tbl_fund_r_funds(trade_id)
-            fund_id = tbl_fund_latest(trade_id)
+            fund_id = TBL_VAL.tbl_fund_latest(trade_id)
 
             #すべて約定？ sell 2a
             tmp_count = TBL_VAL.tbl_count_o_e_active(trade_id)
@@ -190,10 +197,24 @@ class STAGE_C():
 
                 #ins trade（次回用）
                 #diff::::rtype, initial_fund_id, phase, status, ticker, logic_ver
-                TBL_VAL.tbl_ins_trade(app_rtype, fund_id, '0', 'on', \
+                TBL_VAL.tbl_ins_trade(app_rtype, fund_id+1, '0', 'on', \
                     ticker, trade_logic_ver)
+                
+                #select trade ticker,max_id
+                trade_id = TBL_VAL.tbl_trade_max_id(ticker)
+
+                #create fund
+                #def:::trade_id, order_id, exe_id, rtype, ticker, 
+                #def:::status_f, residual_funds, update_diff_funds, run_date_f
+                TBL_VAL.tbl_ins_fund(trade_id, 0, 0, app_rtype, ticker, 
+                    'on', fund_r_funds, 0, date)
+                
+                #update fund status_f=off
+                TBL_VAL.tbl_upd_fund_after_ins(fund_id, 'off', date)
 
                 #loop終了
+                logger.debug(f'return stage all finish 219')
+                return
 
             #get latest values
             #select order
@@ -205,8 +226,8 @@ class STAGE_C():
                 df_order = None
 
 
-            #sell 2a全決済　＝価格変更。処分目的で発注済みorderの指値をc_priceに変更すること
-            if not df_order is None: #o idはnoneじゃない？
+            #sell 2a全決済　＝処分価格に変更。処分目的で発注済みorderの指値をc_priceに変更すること
+            if not df_order.empty: #o idはnoneじゃない？
                 for r in df_order:
                     #df_orderから取り出し
                     order_id = df_order.loc[r,'order_id']
@@ -221,8 +242,44 @@ class STAGE_C():
                             #update order
                             TBL_VAL.tbl_upd_order_price(order_id,tmp_order_price, date)
                         case 'real':
-                            print('あとで実装')
+                            print('あとで実装')            
+            elif trade_phase == '2':#約定前と約定後の分岐に対応(order無い＆trade p2)
+                #新規order：exe close売れ残り処分=sell増し 2a
+                #価格下落の緊急事態の為、連続でorder実行
+                #select order
+                try:
+                    #selct exe df（都度指定）
+                    #diff::::#trade_id, phase_e, status_e
+                    df_h_exe = TBL_VAL.tbl_exe_df(trade_id, '1a', 'hold')
+                except TypeError:
+                    df_h_exe = None
 
+                #exeのstatus_e=holdがある？あればsell増し続行            
+                if not df_h_exe.empty: #o idはnoneじゃない？
+                    #exe holdはある
+                    for r in df_h_exe:
+                        #dfから取り出し
+                        h_exe_quantity = df_h_exe.loc[r,'quantity']
+                        h_exe_order_id = df_h_exe.loc[r,'order_id']
+                        #指値の決定
+                        tmp_order_price = c_price * 0.997
+                        tmp_order_price = '{:.2f}'.format(tmp_order_price)#小数点2位まで
+                        tmp_order_price = float(tmp_order_price)#何故かstrになったのでfloatへ
+                        #数量の決定
+                        tmp_order_quantity = h_exe_quantity
+                        #新規order
+                        match app_rtype:
+                                case 'simu':
+                                    #simuなので架空のSEC注文番号を生成
+                                    tmp_pf_order_number = TBL_VAL.GetRandomStr(10)
+                                    #create order
+                                    #def::::trade_id, phase_o, status_o,otype, 
+                                    #def::::order_price, quantity, hold_exe_id, pf_order_number
+                                    TBL_VAL.tbl_ins_order(trade_id, '2a', 'on', 'sell', 
+                                            tmp_order_price, tmp_order_quantity, 
+                                            tmp_pf_order_number, h_exe_order_id, date)
+                                case 'real':
+                                    print('あとで実装')
 
         #現在価格は移動平均線より上?-----------------------------
         #get latest values
@@ -247,7 +304,7 @@ class STAGE_C():
 
         #現在価格は移動平均線より上?
         #約定確認 sell 2a 全決済
-        if not df_order is None: #o idはnoneじゃない？
+        if not df_order.empty: #o idはnoneじゃない？
             for r in df_order:
                 #df_orderから取り出し
                 order_id = df_order.loc[r,'order_id']
@@ -280,6 +337,10 @@ class STAGE_C():
                             exe_id, exe_trade_id, phase_e, exe_order_id, exe_price, \
                                 exe_quantity, exe_pf_order_number = \
                                 list[0], list[1], list[2], list[3], list[4], list[5], list[6]
+
+                            #update fund status_f=off
+                            fund_id = TBL_VAL.tbl_fund_latest(trade_id)
+                            TBL_VAL.tbl_upd_fund_after_ins(fund_id, 'off', date)
 
                             #最新fund取得
                             fund_r_funds = TBL_VAL.tbl_fund_r_funds(trade_id)
@@ -321,7 +382,7 @@ class STAGE_C():
         
         #最新fund取得
         fund_r_funds = TBL_VAL.tbl_fund_r_funds(trade_id)
-        fund_id = tbl_fund_latest(trade_id)
+        fund_id = TBL_VAL.tbl_fund_latest(trade_id)
 
         #すべて約定？ sell 2a
         tmp_count = TBL_VAL.tbl_count_o_e_active(trade_id)
@@ -348,7 +409,21 @@ class STAGE_C():
             TBL_VAL.tbl_ins_trade(app_rtype, fund_id, '0', 'on', \
                 ticker, trade_logic_ver)
 
+            #select trade ticker,max_id
+            trade_id = TBL_VAL.tbl_trade_max_id(ticker)
+
+            #create fund
+            #def:::trade_id, order_id, exe_id, rtype, ticker, 
+            #def:::status_f, residual_funds, update_diff_funds, run_date_f
+            TBL_VAL.tbl_ins_fund(trade_id, 0, 0, app_rtype, ticker, 
+                'on', fund_r_funds, 0, date)
+            
+            #update fund status_f=off
+            TBL_VAL.tbl_upd_fund_after_ins(fund_id, 'off', date)
+
             #loop終了
+            logger.debug(f'return stage all finish')
+            return
 
 
 
@@ -374,7 +449,7 @@ class STAGE_C():
 
 
         #既存orderの確認　sell増し
-        if not df_order is None: #o idはnoneじゃない？
+        if not df_order.empty: #o idはnoneじゃない？
             for r in df_order:
                 #df_orderから取り出し
                 order_id = df_order.loc[r,'order_id']
@@ -421,7 +496,7 @@ class STAGE_C():
             #exeのstatus_e=holdがある？あればsell増し続行            
             if not m_exe_id is None: #o idはnoneじゃない？
                 #exe holdはある
-                #selct exe（都度指定）
+                #selct exe（都度指定）基準として約定価格が必要
                 list = TBL_VAL.tbl_exe_single(trade_id, 2, 'close') #trade_id, phase_e, status_e
                 exe_id, exe_trade_id, phase_e, exe_order_id, exe_price, \
                     exe_quantity, exe_pf_order_number = \
