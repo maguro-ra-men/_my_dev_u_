@@ -52,7 +52,8 @@ class STAGE_C():
         try:
             #（都度指定）必要な各tableのphase指定が必要
             #diff::::trade_id,trade_phase,order_pahase
-            df_order = TBL_VAL.tbl_order_df(trade_id,2,'2a') 
+            df_order = TBL_VAL.tbl_order_df(trade_id,'2','2a') 
+            print(df_order)#あとでけす
         except TypeError:
             df_order = None
         
@@ -96,7 +97,7 @@ class STAGE_C():
             
             #約定確認 sell 2a 全決済
             if not df_order.empty: #o idはnoneじゃない？
-                for r in df_order:
+                for r in df_order.index:
                     #df_orderから取り出し
                     order_id = df_order.loc[r,'order_id']
                     order_price = df_order.loc[r,'order_price']
@@ -129,12 +130,12 @@ class STAGE_C():
                                     exe_quantity, exe_pf_order_number = \
                                     list[0], list[1], list[2], list[3], list[4], list[5], list[6]
 
+                                #最新fund取得
+                                fund_r_funds = TBL_VAL.tbl_fund_r_funds(trade_id)
+
                                 #update fund status_f=off
                                 fund_id = TBL_VAL.tbl_fund_latest(trade_id)
                                 TBL_VAL.tbl_upd_fund_after_ins(fund_id, 'off', date)
-
-                                #最新fund取得
-                                fund_r_funds = TBL_VAL.tbl_fund_r_funds(trade_id)
 
                                 #create fund
                                 tmp_r_funds = \
@@ -222,13 +223,14 @@ class STAGE_C():
                 #（都度指定）必要な各tableのphase指定が必要
                 #diff::::trade_id,trade_phase,order_pahase
                 df_order = TBL_VAL.tbl_order_df(trade_id,2,'2a') 
+                print(df_order)#あとでけす
             except TypeError:
                 df_order = None
 
 
             #sell 2a全決済　＝処分価格に変更。処分目的で発注済みorderの指値をc_priceに変更すること
             if not df_order.empty: #o idはnoneじゃない？
-                for r in df_order:
+                for r in df_order.index:
                     #df_orderから取り出し
                     order_id = df_order.loc[r,'order_id']
                     order_pf_order_number= df_order.loc[r,'pf_order_number']
@@ -257,7 +259,7 @@ class STAGE_C():
                 #exeのstatus_e=holdがある？あればsell増し続行            
                 if not df_h_exe.empty: #o idはnoneじゃない？
                     #exe holdはある
-                    for r in df_h_exe:
+                    for r in df_h_exe.index:
                         #dfから取り出し
                         h_exe_quantity = df_h_exe.loc[r,'quantity']
                         h_exe_order_id = df_h_exe.loc[r,'order_id']
@@ -292,12 +294,14 @@ class STAGE_C():
         try:
             #（都度指定）必要な各tableのphase指定が必要
             #diff::::trade_id,trade_phase,order_pahase
-            df_order = TBL_VAL.tbl_order_df(trade_id,2,'2a') 
+            df_order = TBL_VAL.tbl_order_df(trade_id,'2','2a') 
+            print(df_order)#あとでけす errorおきたとこ
+            #df_order.to_csv(f'{rootpath}\\debug_de_order.csv') #あとでけす
         except TypeError:
             df_order = None
 
         #selct exe（都度指定）
-        list = TBL_VAL.tbl_exe_single(trade_id, 2, 'close') #trade_id, phase_e, status_e
+        list = TBL_VAL.tbl_exe_single(trade_id, '2', 'close') #trade_id, phase_e, status_e
         exe_id, exe_trade_id, phase_e, exe_order_id, exe_price, \
             exe_quantity, exe_pf_order_number = \
             list[0], list[1], list[2], list[3], list[4], list[5], list[6]
@@ -305,9 +309,9 @@ class STAGE_C():
         #現在価格は移動平均線より上?
         #約定確認 sell 2a 全決済
         if not df_order.empty: #o idはnoneじゃない？
-            for r in df_order:
+            for r in df_order.index:
                 #df_orderから取り出し
-                order_id = df_order.loc[r,'order_id']
+                order_id = df_order.loc[r,'order_id']                
                 order_price = df_order.loc[r,'order_price']
                 order_quantity = df_order.loc[r,'quantity']
                 order_pf_order_number= df_order.loc[r,'pf_order_number']
@@ -338,12 +342,12 @@ class STAGE_C():
                                 exe_quantity, exe_pf_order_number = \
                                 list[0], list[1], list[2], list[3], list[4], list[5], list[6]
 
-                            #update fund status_f=off
-                            fund_id = TBL_VAL.tbl_fund_latest(trade_id)
-                            TBL_VAL.tbl_upd_fund_after_ins(fund_id, 'off', date)
-
                             #最新fund取得
                             fund_r_funds = TBL_VAL.tbl_fund_r_funds(trade_id)
+                            fund_id = TBL_VAL.tbl_fund_latest(trade_id)
+
+                            #update fund status_f=off
+                            TBL_VAL.tbl_upd_fund_after_ins(fund_id, 'off', date)
 
                             #create fund
                             tmp_r_funds = \
@@ -438,6 +442,7 @@ class STAGE_C():
             #（都度指定）必要な各tableのphase指定が必要
             #diff::::trade_id,trade_phase,order_pahase
             df_order = TBL_VAL.tbl_order_df(trade_id,2,'2a') 
+            print(df_order)#あとでけす
         except TypeError:
             df_order = None
 
@@ -450,7 +455,7 @@ class STAGE_C():
 
         #既存orderの確認　sell増し
         if not df_order.empty: #o idはnoneじゃない？
-            for r in df_order:
+            for r in df_order.index:
                 #df_orderから取り出し
                 order_id = df_order.loc[r,'order_id']
                 order_price = df_order.loc[r,'order_price']

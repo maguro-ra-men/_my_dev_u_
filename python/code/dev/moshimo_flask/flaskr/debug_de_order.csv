@@ -1,0 +1,2 @@
+,id,ticker,phase,order_id,phase_o,status_o,otype,order_price,quantity,pf_order_number,hold_exe_id
+0,38,SOXL,2,322,2a,on,sell,47.79,0.0,OkopUCOD8A,320

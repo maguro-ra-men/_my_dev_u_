@@ -1,6 +1,7 @@
 #modulesのpath通し、logに利用
 rootpath='C:\\Users\\kazu\\_my_dev_u_\\python\\code\\dev\\moshimo_flask\\flaskr'
 #pj用moduleのpython pathを通す。（os.path.dirname～～ではcdまでしか取れずNGだった）
+from cmath import nan
 from locale import currency
 import sys
 sys.path.append(f"{rootpath}")
@@ -16,6 +17,7 @@ from modules.variable import app_drange,app_rtype,fdate,tdate
 from modules.cls.tbl_val import TBL_VAL
 
 import pandas as pd
+import math
 
 """
 df_wlistを作成
@@ -50,10 +52,14 @@ for r in df_wlist.index:
     date = df_wlist.loc[r,'date']
 
     #ex_rateはnone？API起因で発生する為対処必要
+    f=0
     for i in range(10):
         i = i+1
-        if ex_rate == None:
-            ex_rate = df_wlist.loc[r+1,'ex_rate']
+        f = f-1
+        if ex_rate == None or math.isnan(ex_rate): #nan　を判定。非数らしい
+            logger.debug(f'Invalid ex_rate Before change {ex_rate} date {date}')
+            ex_rate = df_wlist.loc[r+f,'ex_rate']
+            logger.debug(f'Invalid ex_rate After change {ex_rate} date {date}  {f}')
         else:
             break
 

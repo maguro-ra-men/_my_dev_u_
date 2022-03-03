@@ -3,6 +3,8 @@ rootpath='C:\\Users\\kazu\\_my_dev_u_\\python\\code\\dev\\moshimo_flask\\flaskr'
 #pj用moduleのpython pathを通す。（os.path.dirname～～ではcdまでしか取れずNGだった）
 from locale import currency
 import sys
+
+from numpy import empty
 sys.path.append(f"{rootpath}")
 
 #loging
@@ -126,19 +128,20 @@ class TBL_VAL():
             return order_id_list
     
     def tbl_order_df(trade_id,trade_phase,order_pahase):
-        try:
-            query=f'select a.id, a.ticker, a.phase, b.id as order_id, b.phase_o, \
-            b.status_o, b.otype, b.order_price, b.quantity, b.pf_order_number, \
-            b.hold_exe_id \
-            from `trade` as a \
-            left join `order` as b ON (a.id  = b.trade_id) \
-            where a.id={trade_id} and a.phase="{trade_phase}" and \
-            b.status_o ="on" and b.phase_o="{order_pahase}"'
-            df_order = pd.read_sql_query(query, engine)
-        except KeyError:
-            pass
-        else:
+        df_order=None
+        query=None
+        query=f'select a.id, a.ticker, a.phase, b.id as order_id, b.phase_o, \
+        b.status_o, b.otype, b.order_price, b.quantity, b.pf_order_number, \
+        b.hold_exe_id \
+        from `trade` as a \
+        left join `order` as b ON (a.id  = b.trade_id) \
+        where a.id={trade_id} and a.phase="{trade_phase}" and \
+        b.status_o ="on" and b.phase_o="{order_pahase}"'
+        df_order = pd.read_sql_query(query, engine)
+        if not df_order.empty:
             return df_order
+        else:
+            return df_order #Noneにすると後の判定がエラー。そのまま返す
 
     def tbl_exe_latest(trade_id, order_id):
         query=f'select id, trade_id, phase_e, order_id, otype, exe_price, \
@@ -166,10 +169,16 @@ class TBL_VAL():
             create_time \
             from execution \
             where trade_id={trade_id} and phase_e ="{phase_e}" and \
-            status_e = "{status_e}" and \
-            id=(select max(id) from execution) \
+            status_e = "{status_e}" \
             ORDER BY id DESC \
             LIMIT 1;'
+        """
+        #3/2検証開始1a orderする直前でこのexe idが取れない
+        エラー時のexe tableは最新が1a、一つ前が1、max id指定で1が取れない。
+        whereから以下を抜いた
+        and \
+            id=(select max(id) from execution) 
+        """
         df = pd.read_sql_query(query, engine)
         if not df.empty:
             exe_id = df.loc[0,'id']
@@ -203,10 +212,11 @@ class TBL_VAL():
                 from execution \
                 where trade_id={trade_id} and phase_e ="{phase_e}" and \
                 status_e = "{status_e}" and \
-                id=(select max(exe_price) from execution) \
+                exe_price>=(select min(exe_price) from execution) \
                 ORDER BY id ASC \
                 LIMIT 1;'
             df = pd.read_sql_query(query, engine)
+            # exe_price>= にしてみた。=だと結果0の為。
             m_exe_id = df.loc[0,'id']
             m_exe_trade_id = df.loc[0,'trade_id']
             m_phase_e = df.loc[0,'phase_e']
@@ -240,7 +250,7 @@ class TBL_VAL():
             quantity, status_e, pf_order_number, close_order_id, run_date_e, \
             create_time \
             from execution \
-            where trade_id={trade_id}, order_id~{order_id};'
+            where trade_id={trade_id} and order_id={order_id};'
         df = pd.read_sql_query(query, engine)
         exe_id = df.loc[0,'id']
         return exe_id
@@ -334,7 +344,7 @@ class TBL_VAL():
             b.update_diff_funds, b.id as fund_id \
             from `trade` as a \
             left join fund as b ON (a.id  = b.trade_id)\
-            where a.id="{trade_id}" and b.status_f ="on" and \
+            where a.id={trade_id} and b.status_f ="on" and \
                 b.id=(select max(b.id) from fund)\
             ORDER BY fund_id DESC\
             LIMIT 1;'
@@ -408,7 +418,7 @@ class TBL_VAL():
             order_price, quantity, pf_order_number, hold_exe_id, run_date_o):
         query=text(f'insert into `order` (trade_id, phase_o, status_o,otype, \
             order_price, quantity, pf_order_number, hold_exe_id, run_date_o) \
-            values({trade_id}, {phase_o}, "{status_o}", "{otype}", \
+            values({trade_id}, "{phase_o}", "{status_o}", "{otype}", \
             {order_price}, {quantity}, "{pf_order_number}", \
             {hold_exe_id}, "{run_date_o}");')
         session.execute(query)

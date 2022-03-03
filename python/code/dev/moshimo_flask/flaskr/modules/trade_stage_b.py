@@ -108,20 +108,23 @@ class STAGE_B():
             #get latest values
             list=TBL_VAL.tbl_trade_single(ticker)
             trade_id, trade_phase, trade_last_run_date, trade_end_of_turn, \
-            trade_initial_fund_id, trade_fund_id, trade_in_residual_funds = \
-                list[0], list[1], list[2], list[3], list[4], list[5], list[6]
+            trade_initial_fund_id, trade_fund_id = \
+                list[0], list[1], list[2], list[3], list[4], list[5]
             try:
                 #（都度指定）必要な各tableのphase指定が必要
-                list = TBL_VAL.tbl_order_single(trade_id,1,'1a') #trade_id,trade_phase,order_pahase
+                list = TBL_VAL.tbl_order_single(trade_id,'1','1a') #trade_id,trade_phase,order_pahase
                 order_id, order_price, order_quantity, order_pf_order_number = \
                     list[0], list[1], list[2], list[3]
             except TypeError:
                 order_id = None
             #selct exe（都度指定）
-            list = TBL_VAL.tbl_exe_single(trade_id, 1, 'hold') #trade_id, phase_e, status_e
+            list = TBL_VAL.tbl_exe_single(trade_id, '1', 'hold') #trade_id, phase_e, status_e
             exe_id, exe_trade_id, phase_e, exe_order_id, exe_price, \
                 exe_quantity, exe_pf_order_number = \
                 list[0], list[1], list[2], list[3], list[4], list[5], list[6]
+            #ini r funds取得
+            ini_fund_r_funds = TBL_VAL.tbl_fund_select_f_id(trade_initial_fund_id)
+
 
 
             #既存orderの確認 buy増し(1a order中は1つしか存在しない)
@@ -158,7 +161,7 @@ class STAGE_B():
                                 fund_before_r_funds - int((tmp_order_price * ex_rate) * order_quantity)
                             tmp_diff_funds = tmp_r_funds - fund_before_r_funds
                             TBL_VAL.tbl_upd_fund_rdiff_funds(trade_id, 
-                                order_id,tmp_r_funds, tmp_diff_funds, date)
+                                order_id, 0, tmp_r_funds, tmp_diff_funds, date)
                         case 'real':
                             print('あとで実装')
             elif trade_phase == '1':#約定前と約定後の分岐に対応(order無い＆trade p1)
@@ -177,9 +180,9 @@ class STAGE_B():
                     tmp_order_price = float(tmp_order_price)#何故かstrになったのでfloatへ
                     #数量の決定
                     import math
-                    if trade_in_residual_funds * 0.1 <= fund_r_funds:
-                        #in_fundの10%で数量設定
-                        tmp_ok_buy_funds = int((trade_in_residual_funds * 0.5) / ex_rate)
+                    if ini_fund_r_funds * 0.1 <= fund_r_funds:
+                        #in_fundの 10% で数量設定
+                        tmp_ok_buy_funds = int((ini_fund_r_funds * 0.1) / ex_rate)
                         tmp_order_quantity = int(tmp_ok_buy_funds / tmp_order_price)
                     else:
                         #in_fundの10%以下。fund残金すべてで数量設定
@@ -197,7 +200,7 @@ class STAGE_B():
                                         tmp_order_price, tmp_order_quantity, 
                                         tmp_pf_order_number, 0, date)
                                 #get lasted order_id必要
-                                list = TBL_VAL.tbl_order_single(trade_id,0,1) #trade_id,trade_phase,order_pahase
+                                list = TBL_VAL.tbl_order_single(trade_id,'1','1a') #trade_id,trade_phase,order_pahase
                                 order_id, order_price, order_quantity, order_pf_order_number = \
                                 list[0], list[1], list[2], list[3]
                                 #create fund
