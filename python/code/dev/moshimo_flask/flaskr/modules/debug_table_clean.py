@@ -34,8 +34,23 @@ query=text(f'UPDATE trade \
 session.execute(query)
 session.commit()
 
+trade_id=2
+query=text(f'UPDATE trade \
+    SET initial_fund_id=null, phase="0", status="on", \
+        cnt_run_date=null, end_of_turn=null\
+    WHERE id={trade_id};')
+session.execute(query)
+session.commit()
+
 #upd fund
 fund_id=1
+query=text(f'UPDATE `fund` \
+    SET status_f="on", run_date_f=null\
+    WHERE id={fund_id};')
+session.execute(query)
+session.commit()
+
+fund_id=2
 query=text(f'UPDATE `fund` \
     SET status_f="on", run_date_f=null\
     WHERE id={fund_id};')
@@ -52,7 +67,7 @@ session.execute(query)
 session.commit()
 
 table='`fund`'
-query=text(f'DELETE FROM {table} where id >= 2;')
+query=text(f'DELETE FROM {table} where id >= 3;')
 session.execute(query)
 session.commit()
 

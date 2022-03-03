@@ -92,7 +92,7 @@ class STAGE_C():
                 #def::::trade_id, trade_phase, end_of_turn
                 TBL_VAL.tbl_upd_trade_after_exe(trade_id, 2, 1)
                 #loop終了
-                logger.debug(f'return tmp_run_date = next_business_day')
+                logger.debug(f'return tmp_run_date = {next_business_day}')
                 return
             
             #約定確認 sell 2a 全決済

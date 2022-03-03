@@ -9,8 +9,8 @@ sys.path.append(f"{rootpath}")
 
 #loging
 from logging import getLogger,config
-from conf.logger_conf import *
-logger = getLogger(__name__)
+import logging
+from conf.logger_conf import * #my module
 
 #my module
 from conf.db import engine,session
@@ -205,18 +205,19 @@ class TBL_VAL():
 
 
     def tbl_exe_min_price(trade_id, phase_e, status_e):
-        try:
-            query=f'select id, trade_id, phase_e, order_id, otype, exe_price, \
-                quantity, status_e, pf_order_number, close_order_id, run_date_e, \
-                create_time \
-                from execution \
-                where trade_id={trade_id} and phase_e ="{phase_e}" and \
-                status_e = "{status_e}" and \
-                exe_price>=(select min(exe_price) from execution) \
-                ORDER BY id ASC \
-                LIMIT 1;'
-            df = pd.read_sql_query(query, engine)
-            # exe_price>= にしてみた。=だと結果0の為。
+        df,query=None,None
+        query=f'select id, trade_id, phase_e, order_id, otype, exe_price, \
+            quantity, status_e, pf_order_number, close_order_id, run_date_e, \
+            create_time \
+            from execution \
+            where trade_id={trade_id} and phase_e ="{phase_e}" and \
+            status_e = "{status_e}" and \
+            exe_price>=(select min(exe_price) from execution) \
+            ORDER BY id ASC \
+            LIMIT 1;'
+        df = pd.read_sql_query(query, engine)
+        # exe_price>= にしてみた。=だと結果0の為。
+        if not df.empty:
             m_exe_id = df.loc[0,'id']
             m_exe_trade_id = df.loc[0,'trade_id']
             m_phase_e = df.loc[0,'phase_e']
@@ -225,11 +226,20 @@ class TBL_VAL():
             m_exe_quantity = df.loc[0,'quantity']
             m_exe_pf_order_number = df.loc[0,'pf_order_number']
             m_exe_create_time = df.loc[0,'create_time']
-        except KeyError:
-            pass
-        else:
             return m_exe_id, m_exe_trade_id, m_phase_e, m_exe_order_id, m_exe_price, \
                 m_exe_quantity, m_exe_pf_order_number, m_exe_create_time
+        else:
+            m_exe_id = None
+            m_exe_trade_id = None
+            m_phase_e = None
+            m_exe_order_id = None
+            m_exe_price = None
+            m_exe_quantity = None
+            m_exe_pf_order_number = None
+            m_exe_create_time = None
+            return m_exe_id, m_exe_trade_id, m_phase_e, m_exe_order_id, m_exe_price, \
+                m_exe_quantity, m_exe_pf_order_number, m_exe_create_time
+
 
     def tbl_exe_df(trade_id, phase_e, status_e):
         try:
@@ -256,18 +266,22 @@ class TBL_VAL():
         return exe_id
         
     def tbl_st_prices_next_biz_day(ticker,wheredate):
-        try:
-            query=f'select date, ticker\
-                from stock_prices\
-                where ticker="{ticker}" and date > "{wheredate}" \
-                order by date asc \
-                limit 1;'
-            df = pd.read_sql_query(query, engine)
+        df,query=None,None
+        query=f'select date, ticker\
+            from stock_prices\
+            where ticker="{ticker}" and date > "{wheredate}" \
+            order by date asc \
+            limit 1;'
+        df = pd.read_sql_query(query, engine)
+        if not df.empty:
             next_business_day = df.loc[0,'date']
-        except KeyError:
+            logger.debug(f'def results df not empty next day {next_business_day}')
+            return next_business_day
+        else:
             #もしなければ約定当日なのでtodayを代入
             next_business_day = datetime.date.today()
-        return next_business_day
+            logger.debug(f'def results df empty today  {next_business_day}')
+            return next_business_day
 
     def tbl_count_o_e_active(trade_id):
         query=f'select * \
@@ -357,7 +371,7 @@ class TBL_VAL():
             update_diff_funds \
             from fund \
             where trade_id="{trade_id}" and status_f ="on" and \
-                id=(select max(id) from fund)\
+                id<=(select max(id) from fund)\
             ORDER BY id DESC\
             LIMIT 1;'
         df = pd.read_sql_query(query, engine)
