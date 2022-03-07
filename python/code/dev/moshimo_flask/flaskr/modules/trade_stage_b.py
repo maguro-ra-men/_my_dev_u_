@@ -57,14 +57,6 @@ class STAGE_B():
         
         #現在価格は移動平均線より下?-----------------------------
         if c_price <= mov_avg:
-            """
-            不要？
-            #約定確認　エラー回避策
-            try:
-                order_id in globals() #o idは定義済み？
-            except NameError:
-                order_id = None
-            """
             #約定確認 buy増し(1a order中は1つしか存在しない)
             if not order_id is None: #o idはnoneじゃない？
                 list = [order_id]
@@ -172,6 +164,8 @@ class STAGE_B():
                 if fund_r_funds / ex_rate > c_price * 1.01:
                     #資金はある
                     #指値の決定
+                    if date == '2022-01-18' or date == '2022-01-19':
+                        print('check!')
                     if c_price <= exe_price:
                         tmp_order_price = c_price * 0.997
                     else:

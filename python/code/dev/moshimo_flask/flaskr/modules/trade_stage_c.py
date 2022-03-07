@@ -204,6 +204,10 @@ class STAGE_C():
                 #select trade ticker,max_id
                 trade_id = TBL_VAL.tbl_trade_max_id(ticker)
 
+                #update trade （都度指定）※こえないと最新tradeのexe無いエラーに繋がる
+                #def::::trade_id, trade_phase, end_of_turn
+                TBL_VAL.tbl_upd_trade_after_exe(trade_id, 0, 1)
+
                 #create fund
                 #def:::trade_id, order_id, exe_id, rtype, ticker, 
                 #def:::status_f, residual_funds, update_diff_funds, run_date_f
@@ -415,6 +419,10 @@ class STAGE_C():
 
             #select trade ticker,max_id
             trade_id = TBL_VAL.tbl_trade_max_id(ticker)
+
+            #update trade （都度指定）※こえないと最新tradeのexe無いエラーに繋がる
+            #def::::trade_id, trade_phase, end_of_turn
+            TBL_VAL.tbl_upd_trade_after_exe(trade_id, 0, 1)
 
             #create fund
             #def:::trade_id, order_id, exe_id, rtype, ticker, 
