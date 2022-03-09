@@ -16,18 +16,13 @@ from conf.logger_conf import * #my module
 from conf.db import engine,session
 from modules.variable import app_drange,app_rtype,fdate,tdate
 from modules.variable import *
-"""
-from modules.variable import app_drange,app_rtype,fdate,tdate, \
-    ticker, ex_rate, c_price, high_price, low_price, mov_avg, bb_highs, \
-        bb_lows, date
-"""
 from modules.cls.tbl_val import TBL_VAL
 
 import pandas as pd
 
 class STAGE_A():
     def a():
-        #get latest values
+        #get latest values(stage standard)
         list = API_DATA_ONE_DAY.one_day()
         ticker, ex_rate, c_price, high_price, low_price, mov_avg, \
             bb_highs, bb_lows, date = \
@@ -36,76 +31,34 @@ class STAGE_A():
         
         print(f'start::::trade_stage_a date is {date}')
 
-        list=TBL_VAL.tbl_trade_single(ticker)
-        trade_id, trade_phase, trade_last_run_date, trade_end_of_turn, \
-        trade_initial_fund_id, trade_fund_id, trade_in_residual_funds = \
-            list[0], list[1], list[2], list[3], list[4], list[5], list[6]
-
-        #select order
-        list = TBL_VAL.tbl_order_single(trade_id,0,1) #trade_id,trade_phase,order_pahase
-        order_id, order_price, order_quantity, order_pf_order_number = \
-            list[0], list[1], list[2], list[3]
-
-
-        #1日1回しか売買しないので状態チェック
-        if trade_end_of_turn == 1:
+        #（現在価格は移動平均線より上？）
+        # ※mov_avgが上=trade pahse0と無関係の市場で
+        #  BB low付近でorderしても約定する頃は
+        #  BB lowが動いてしまいorder後変更不能の数量が理想と離れるリスクの回避
+        if c_price >= mov_avg:
             #loop終了
-            logger.debug(f'return trade_end_of_turn = 1')
+            logger.debug(f'(c_price >= mov_avg) Markets not related to (trade pahse 0)  stage_a is skip.run date: {date}')
             return
-
-
-        #約定確認
-        if not order_id is None: #o idはnoneじゃない？
-            list = [order_id]
-            for i in list:
-                #if order_idのpriceはhigh-lowの範囲？
-                if order_price <= high_price and order_price >= low_price:
-                    match app_rtype:
-                        case 'simu':
-                            #create exe
-                            #def::::trade_id, phase_e, order_id, 
-                            #def::::otype, exe_price, quantity, status_e, 
-                            #def::::pf_order_number, close_order_id, run_date_e
-                            TBL_VAL.tbl_ins_exe(trade_id, 1, order_id, 
-                                    'buy', order_price, order_quantity, 'hold', 
-                                    order_pf_order_number, '', date)
-                            #selct exe
-                            list = TBL_VAL.tbl_exe_latest(trade_id, order_id)
-                            exe_id, exe_trade_id, phase_e, exe_order_id, exe_price, \
-                                exe_quantity, exe_pf_order_number = \
-                                list[0], list[1], list[2], list[3], list[4], list[5], list[6]
-
-                            #update fund
-                            #fundで最新より1つ前のrを取得
-                            fund_before_r_funds = TBL_VAL.tbl_before_fund_r_funds(trade_id)
-                            #あとは新規order時のように算出してupdate
-                            tmp_r_funds = \
-                            fund_before_r_funds - int((order_price * ex_rate) * order_quantity)
-                            tmp_diff_funds = tmp_r_funds - fund_before_r_funds
-                            TBL_VAL.tbl_upd_fund_rdiff_funds(trade_id, 
-                            order_id, exe_id, tmp_r_funds, tmp_diff_funds, date)
-
-                            #update trade （都度指定）
-                            #def::::trade_id, trade_phase, end_of_turn
-                            TBL_VAL.tbl_upd_trade_after_exe(trade_id, 1, 1)
-
-                            #update order status_o=off
-                            TBL_VAL.tbl_upd_order_after_exe(order_id, 'off', date)
-                        case 'real':
-                            print('あとで実装')
 
         #get latest values
         list=TBL_VAL.tbl_trade_single(ticker)
         trade_id, trade_phase, trade_last_run_date, trade_end_of_turn, \
         trade_initial_fund_id, trade_fund_id, trade_in_residual_funds = \
             list[0], list[1], list[2], list[3], list[4], list[5], list[6]
+
+        #1日1回しか売買しないので状態チェック(stage standard)
+        if trade_end_of_turn == 1:
+            #loop終了
+            logger.debug(f'return trade_end_of_turn = 1')
+            return
+
+        #get latest values
         #select order
         list = TBL_VAL.tbl_order_single(trade_id,'0','1') #trade_id,trade_phase,order_pahase
         order_id, order_price, order_quantity, order_pf_order_number = \
             list[0], list[1], list[2], list[3]
 
-
-        #既存orderの確認
+        #既存orderの確認---------------------------------------------
         if not order_id is None: #o idはnoneじゃない？
             tmp_edit_price=0
             #Y:（既存orderの価格訂正）
@@ -142,6 +95,60 @@ class STAGE_A():
                             order_id,0,tmp_r_funds, tmp_diff_funds, date)
                     case 'real':
                         print('あとで実装')
+
+
+            #約定確認（準備）
+            #get latest values
+            list=TBL_VAL.tbl_trade_single(ticker)
+            trade_id, trade_phase, trade_last_run_date, trade_end_of_turn, \
+            trade_initial_fund_id, trade_fund_id, trade_in_residual_funds = \
+                list[0], list[1], list[2], list[3], list[4], list[5], list[6]
+
+            #select order
+            list = TBL_VAL.tbl_order_single(trade_id,0,1) #trade_id,trade_phase,order_pahase
+            order_id, order_price, order_quantity, order_pf_order_number = \
+                list[0], list[1], list[2], list[3]                        
+            #約定確認
+            if not order_id is None: #o idはnoneじゃない？
+                loop_list = [order_id]
+                for i in loop_list:
+                    #if order_idのpriceはhigh-lowの範囲？
+                    if order_price <= high_price and order_price >= low_price:
+                        match app_rtype:
+                            case 'simu':
+                                #create exe
+                                #def::::trade_id, phase_e, order_id, 
+                                #def::::otype, exe_price, quantity, status_e, 
+                                #def::::pf_order_number, close_order_id, run_date_e
+                                TBL_VAL.tbl_ins_exe(trade_id, 1, order_id, 
+                                        'buy', order_price, order_quantity, 'hold', 
+                                        order_pf_order_number, '', date)
+                                #selct exe
+                                list = TBL_VAL.tbl_exe_latest(trade_id, order_id)
+                                exe_id, exe_trade_id, phase_e, exe_order_id, exe_price, \
+                                    exe_quantity, exe_pf_order_number = \
+                                    list[0], list[1], list[2], list[3], list[4], list[5], list[6]
+
+                                #update fund
+                                #fundで最新より1つ前のrを取得
+                                fund_before_r_funds = TBL_VAL.tbl_before_fund_r_funds(trade_id)
+                                #あとは新規order時のように算出してupdate
+                                tmp_r_funds = \
+                                fund_before_r_funds - int((order_price * ex_rate) * order_quantity)
+                                tmp_diff_funds = tmp_r_funds - fund_before_r_funds
+                                TBL_VAL.tbl_upd_fund_rdiff_funds(trade_id, 
+                                order_id, exe_id, tmp_r_funds, tmp_diff_funds, date)
+
+                                #update trade （都度指定）
+                                #def::::trade_id, trade_phase, end_of_turn
+                                TBL_VAL.tbl_upd_trade_after_exe(trade_id, 1, 1)
+
+                                #update order status_o=off
+                                TBL_VAL.tbl_upd_order_after_exe(order_id, 'off', date)
+                            case 'real':
+                                print('あとで実装')
+
+
         elif trade_phase == '0':#約定前と約定後の分岐に対応(order無い＆trade p0)
             #新規order
             #最低限stock買える資金がない？
