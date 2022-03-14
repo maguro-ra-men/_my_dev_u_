@@ -39,6 +39,11 @@ query=f'select a.ticker, d.date, e.close as ex_rate, d.close as c_price,\
             order by a.ticker,d.date asc'
 df_wlist = pd.read_sql_query(query, engine)
 
+#for debug　あとでけす
+#df_wlist=df_wlist.rename_axis('index') #indexに名前を付ける
+#df_wlist.to_csv(f'{rootpath}\\wlist.csv') 
+
+
 #ticker x dateでloop
 for r in df_wlist.index:
     ticker = df_wlist.loc[r,'ticker']

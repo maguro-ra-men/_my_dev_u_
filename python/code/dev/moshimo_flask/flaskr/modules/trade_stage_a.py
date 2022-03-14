@@ -66,15 +66,15 @@ class STAGE_A():
             tmp_edit_price=0
             if c_price <= bb_lows:
                 tmp_order_price = c_price * 0.997
-                if order_price >= tmp_order_price * 1.042:
+                if order_price >= tmp_order_price * judg_upper_price_rate:
                     tmp_edit_price=1
-                if order_price <= tmp_order_price * 0.968:
+                if order_price <= tmp_order_price * judg_lower_price_rate:
                     tmp_edit_price=1
             else:
                 tmp_order_price =bb_lows
-                if order_price >= tmp_order_price * 1.042:
+                if order_price >= tmp_order_price * judg_upper_price_rate:
                     tmp_edit_price=1
-                if order_price <= tmp_order_price * 0.968:
+                if order_price <= tmp_order_price * judg_lower_price_rate:
                     tmp_edit_price=1
             tmp_order_price = '{:.2f}'.format(tmp_order_price)#小数点2位まで
             tmp_order_price = float(tmp_order_price)#何故かstrになったのでfloatへ

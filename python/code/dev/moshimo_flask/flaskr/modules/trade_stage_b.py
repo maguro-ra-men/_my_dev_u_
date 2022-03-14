@@ -29,10 +29,6 @@ class STAGE_B():
                 list[0], list[1], list[2], list[3], list[4], list[5], \
                     list[6], list[7], list[8]
         
-        if date == '2022-01-18' or date == '2022-01-19' or\
-            date == '2021-08-30':#あとでけす
-            print('check!')#あとでけす
-
         print(f'start::::trade_stage_b date is {date}')
 
         #get latest values
@@ -73,15 +69,15 @@ class STAGE_B():
                 tmp_edit_price=0
                 if c_price <= exe_price:
                     tmp_order_price = c_price * 0.997
-                    if order_price >= tmp_order_price * 1.042:
+                    if order_price >= tmp_order_price * judg_upper_price_rate:
                         tmp_edit_price=1
-                    if order_price <= tmp_order_price * 0.968:
+                    if order_price <= tmp_order_price * judg_lower_price_rate:
                         tmp_edit_price=1
                 else:
                     tmp_order_price = exe_price * 0.997
-                    if order_price >= tmp_order_price * 1.042:
+                    if order_price >= tmp_order_price * judg_upper_price_rate:
                         tmp_edit_price=1
-                    if order_price <= tmp_order_price * 0.968:
+                    if order_price <= tmp_order_price * judg_lower_price_rate:
                         tmp_edit_price=1
                 tmp_order_price = '{:.2f}'.format(tmp_order_price)#小数点2位まで
                 tmp_order_price = float(tmp_order_price)#何故かstrになったのでfloatへ
@@ -228,6 +224,9 @@ class STAGE_B():
             exe_quantity, exe_pf_order_number = \
             list[0], list[1], list[2], list[3], list[4], list[5], list[6]
 
+        #DEBUG　あとでけす
+        if ticker == 'SDY' and date == '2022-02-25':
+            123
         #現在価格は移動平均線より上?
         if c_price >= mov_avg:
             #既存orderの確認　初回50％sell order
@@ -237,16 +236,24 @@ class STAGE_B():
                 tmp_edit_price=0
                 if c_price >= bb_highs:
                     tmp_order_price = c_price * 1.003
-                    if order_price >= tmp_order_price * 1.042:
+                    if order_price >= tmp_order_price * judg_upper_price_rate:
                         tmp_edit_price=1
-                    if order_price <= tmp_order_price * 0.968:
+                    if order_price <= tmp_order_price * judg_lower_price_rate:
                         tmp_edit_price=1
                 else:
                     tmp_order_price = bb_highs
-                    if order_price >= tmp_order_price * 1.042:
+                    if order_price >= tmp_order_price * judg_upper_price_rate:
                         tmp_edit_price=1
-                    if order_price <= tmp_order_price * 0.968:
+                    if order_price <= tmp_order_price * judg_lower_price_rate:
                         tmp_edit_price=1
+                #下落相場で損しない対策
+                if tmp_order_price <= exe_price:
+                    tmp_order_price = exe_price * 1.01
+                    if order_price == tmp_order_price:	
+                        tmp_edit_price=0
+                    else:	
+                        tmp_edit_price=1
+                #小数点を整形
                 tmp_order_price = '{:.2f}'.format(tmp_order_price)#小数点2位まで
                 tmp_order_price = float(tmp_order_price)#何故かstrになったのでfloatへ
                 #価格訂正(誤差じゃない)
@@ -370,6 +377,10 @@ class STAGE_B():
                     tmp_order_price = c_price * 1.003
                 else:
                     tmp_order_price = bb_highs
+                #下落相場で損しない対策
+                if tmp_order_price <= exe_price:
+                    tmp_order_price = exe_price * 1.01
+                #小数点の整形
                 tmp_order_price = '{:.2f}'.format(tmp_order_price)#小数点2位まで
                 tmp_order_price = float(tmp_order_price)#何故かstrになったのでfloatへ
                 #数量の決定

@@ -23,6 +23,13 @@ print(f'DataRange→　{app_drange}')
 print(f'RunType→　{app_rtype}')
 
 """
+価格変更の判断基準をglobal変数で保持
+"""
+judg_upper_price_rate = 1.02
+judg_lower_price_rate = 0.98
+
+
+"""
 date rangeの確定
 """
 #app_drangeからgetする期間判定//tech chart算出の為、実際期間+21日必要。ざっくり多めに取る

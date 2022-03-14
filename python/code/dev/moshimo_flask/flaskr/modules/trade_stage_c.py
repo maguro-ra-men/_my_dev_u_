@@ -257,15 +257,15 @@ class STAGE_C():#1aの処理工程。なければ即終了
                 tmp_edit_price=0
                 if c_price >= exe_price:
                     tmp_order_price = c_price * 1.003
-                    if order_price >= tmp_order_price * 1.042:
+                    if order_price >= tmp_order_price * judg_upper_price_rate:
                         tmp_edit_price=1
-                    if order_price <= tmp_order_price * 0.968:
+                    if order_price <= tmp_order_price * judg_lower_price_rate:
                         tmp_edit_price=1
                 else:
                     tmp_order_price = exe_price
-                    if order_price >= tmp_order_price * 1.042:
+                    if order_price >= tmp_order_price * judg_upper_price_rate:
                         tmp_edit_price=1
-                    if order_price <= tmp_order_price * 0.968:
+                    if order_price <= tmp_order_price * judg_lower_price_rate:
                         tmp_edit_price=1
                 tmp_order_price = '{:.2f}'.format(tmp_order_price)#小数点2位まで
                 tmp_order_price = float(tmp_order_price)#何故かstrになったのでfloatへ
@@ -456,7 +456,7 @@ class STAGE_C():#1aの処理工程。なければ即終了
             #select trade ticker,max_id
             trade_id = TBL_VAL.tbl_trade_max_id(ticker)
 
-            #update trade （都度指定）※こえないと最新tradeのexe無いエラーに繋がる
+            #update trade （都度指定）※これないと最新tradeのexe無いエラーに繋がる
             #def::::trade_id, trade_phase, end_of_turn
             TBL_VAL.tbl_upd_trade_after_exe(trade_id, 0, 1)
 

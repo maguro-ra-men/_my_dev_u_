@@ -288,7 +288,8 @@ class TBL_VAL():
             from `trade` as a \
             left join `order` as b ON (a.id  = b.trade_id) \
             left join execution as c ON (a.id  = c.trade_id) \
-            where a.id={trade_id} and b.status_o ="on" or c.status_e ="hold" ;'
+            where (a.id={trade_id} and b.status_o ="on") or \
+                (a.id={trade_id} and c.status_e ="hold") ;'
         df = pd.read_sql_query(query, engine)
         tmp_count = len(df)
         return tmp_count
