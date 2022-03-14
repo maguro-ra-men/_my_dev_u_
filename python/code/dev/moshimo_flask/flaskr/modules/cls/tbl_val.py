@@ -307,10 +307,18 @@ class TBL_VAL():
             WHERE id={order_id};')
         session.execute(query)
         session.commit()
-
-    def tbl_upd_fund_after_ins(fund_id,status_f, run_date_f):
+    """
+    dateを入れることでfund発生日がずれるのでdate更新やめた。これは変更前 3/15
+        def tbl_upd_fund_after_ins(fund_id,status_f, run_date_f):
+            query=text(f'UPDATE `fund` \
+                SET status_f="{status_f}", run_date_f="{run_date_f}"\
+                WHERE id={fund_id};')
+            session.execute(query)
+            session.commit()
+    """ 
+    def tbl_upd_fund_after_ins(fund_id,status_f):
         query=text(f'UPDATE `fund` \
-            SET status_f="{status_f}", run_date_f="{run_date_f}"\
+            SET status_f="{status_f}"\
             WHERE id={fund_id};')
         session.execute(query)
         session.commit()

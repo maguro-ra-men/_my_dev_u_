@@ -201,7 +201,7 @@ class STAGE_B():
                                 TBL_VAL.tbl_ins_fund(trade_id, order_id, 0, app_rtype, ticker, 
                                         'on', tmp_r_funds, tmp_diff_funds, date)
                                 #update fund status_f=off
-                                TBL_VAL.tbl_upd_fund_after_ins(fund_id, 'off', date)
+                                TBL_VAL.tbl_upd_fund_after_ins(fund_id, 'off')#date抜いた
 
                             case 'real':
                                 print('あとで実装')
@@ -225,8 +225,8 @@ class STAGE_B():
             list[0], list[1], list[2], list[3], list[4], list[5], list[6]
 
         #DEBUG　あとでけす
-        if ticker == 'SDY' and date == '2022-02-25':
-            123
+        #if ticker == 'OIH' and date == '2021-10-27':
+        #    123
         #現在価格は移動平均線より上?
         if c_price >= mov_avg:
             #既存orderの確認　初回50％sell order
@@ -322,7 +322,7 @@ class STAGE_B():
                                     TBL_VAL.tbl_ins_fund(trade_id, order_id, exe_id, app_rtype, ticker, 
                                             'on', tmp_r_funds, tmp_diff_funds, date)
                                     #update fund status_f=off
-                                    TBL_VAL.tbl_upd_fund_after_ins(fund_id, 'off', date)
+                                    TBL_VAL.tbl_upd_fund_after_ins(fund_id, 'off')#date抜いた
 
                                     #update trade （都度指定）
                                     #def::::trade_id, trade_phase, end_of_turn
@@ -356,7 +356,7 @@ class STAGE_B():
                                             fund_r_funds = TBL_VAL.tbl_fund_r_funds(trade_id)
                                             #update fund status_f=off
                                             fund_id = TBL_VAL.tbl_fund_latest(trade_id)
-                                            TBL_VAL.tbl_upd_fund_after_ins(fund_id, 'off', date)
+                                            TBL_VAL.tbl_upd_fund_after_ins(fund_id, 'off')#date抜いた
 
                                             #create fund
                                             tmp_r_funds = fund_r_funds + tmp_diff_funds

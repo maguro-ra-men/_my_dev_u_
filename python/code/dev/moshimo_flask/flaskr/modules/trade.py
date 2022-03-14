@@ -39,9 +39,9 @@ query=f'select a.ticker, d.date, e.close as ex_rate, d.close as c_price,\
             order by a.ticker,d.date asc'
 df_wlist = pd.read_sql_query(query, engine)
 
-#for debug　あとでけす
-#df_wlist=df_wlist.rename_axis('index') #indexに名前を付ける
-#df_wlist.to_csv(f'{rootpath}\\wlist.csv') 
+#DEBUG　あとでけす
+df_wlist=df_wlist.rename_axis('index') #indexに名前を付ける
+df_wlist.to_csv(f'{rootpath}\\wlist.csv') 
 
 
 #ticker x dateでloop
@@ -102,6 +102,12 @@ for r in df_wlist.index:
         num = 1 #num1の場合、0が動作=1回
     
     for i in range(0, num):#最後のnumは動作ナシ
+        #DEBUG　あとでけす
+        import datetime
+        if ticker == 'OIH' and date == datetime.date(2021, 10, 27):
+            123
+
+        #stage
         if trade_phase == '1': #trade phase=1.buy初回約定？
             from modules.trade_stage_b import STAGE_B #trade phase=0.約定ナシ？
             STAGE_B.b()

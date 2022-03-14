@@ -198,7 +198,7 @@ class STAGE_A():
                         TBL_VAL.tbl_ins_fund(trade_id, order_id, 0, app_rtype, ticker, 
                                 'on', tmp_r_funds, tmp_diff_funds, date)
                         #update fund status_f=off
-                        TBL_VAL.tbl_upd_fund_after_ins(fund_id, 'off', date)
+                        TBL_VAL.tbl_upd_fund_after_ins(fund_id, 'off')#date抜いた
                     case 'real':
                         print('あとで実装')
 

@@ -165,7 +165,7 @@ class STAGE_C():#1aの処理工程。なければ即終了
 
                                     #update fund status_f=off
                                     fund_id = TBL_VAL.tbl_fund_latest(trade_id)
-                                    TBL_VAL.tbl_upd_fund_after_ins(fund_id, 'off', date)
+                                    TBL_VAL.tbl_upd_fund_after_ins(fund_id, 'off')#date抜いた
 
                                     #create fund
                                     tmp_r_funds = \
@@ -343,7 +343,7 @@ class STAGE_C():#1aの処理工程。なければ即終了
                                 fund_id = TBL_VAL.tbl_fund_latest(trade_id)
 
                                 #update fund status_f=off
-                                TBL_VAL.tbl_upd_fund_after_ins(fund_id, 'off', date)
+                                TBL_VAL.tbl_upd_fund_after_ins(fund_id, 'off')#date抜いた
 
                                 #create fund
                                 tmp_r_funds = \
@@ -467,7 +467,7 @@ class STAGE_C():#1aの処理工程。なければ即終了
                 'on', fund_r_funds, 0, date)
             
             #update fund status_f=off
-            TBL_VAL.tbl_upd_fund_after_ins(fund_id, 'off', date)
+            TBL_VAL.tbl_upd_fund_after_ins(fund_id, 'off')#date抜いた
 
             #loop終了
             logger.debug(f'return stage all exe finish!')
