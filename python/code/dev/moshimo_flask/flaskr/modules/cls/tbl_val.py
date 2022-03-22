@@ -33,7 +33,8 @@ class TBL_VAL():
     def tbl_trade_single(ticker):
         query=f'select a.id, a.rtype, a.phase, a.status, a.ticker, \
                 a.last_run_date, cnt_run_date, end_of_turn, initial_fund_id, \
-                b.id as fund_id, residual_funds, a.logic_ver\
+                b.id as fund_id, residual_funds, a.logic_ver, \
+                a.start_run_date\
             from `trade` as a \
             left join fund as b ON (a.id  = b.trade_id)\
             where a.status="on" and a.rtype="{app_rtype}" and \
@@ -48,9 +49,10 @@ class TBL_VAL():
         trade_fund_id = df.loc[0,'fund_id']
         trade_in_residual_funds = df.loc[0,'residual_funds']
         trade_logic_ver = df.loc[0,'logic_ver']
+        trade_start_run_date = df.loc[0,'start_run_date']
         return trade_id, trade_phase, trade_last_run_date, trade_end_of_turn, \
             trade_initial_fund_id, trade_fund_id, trade_in_residual_funds, \
-            trade_logic_ver
+            trade_logic_ver, trade_start_run_date
 
     def tbl_trade_max_id(ticker):
         query=f'select id,ticker \
@@ -333,6 +335,13 @@ class TBL_VAL():
     def tbl_upd_trade_ini_f_id(trade_id, trade_fund_id):
         query=text(f'UPDATE trade \
             SET initial_fund_id={trade_fund_id} \
+            WHERE id={trade_id};')
+        session.execute(query)
+        session.commit()
+
+    def tbl_upd_trade_start_run_date(trade_id, date):
+        query=text(f'UPDATE trade \
+            SET start_run_date="{date}" \
             WHERE id={trade_id};')
         session.execute(query)
         session.commit()

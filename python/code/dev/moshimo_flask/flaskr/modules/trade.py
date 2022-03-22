@@ -82,17 +82,22 @@ for r in df_wlist.index:
     #get latest values
     list=TBL_VAL.tbl_trade_single(ticker)
     trade_id, trade_phase, trade_last_run_date, trade_end_of_turn, \
-    trade_initial_fund_id, trade_fund_id, trade_in_residual_funds = \
-        list[0], list[1], list[2], list[3], list[4], list[5], list[6] 
+    trade_initial_fund_id, trade_fund_id, trade_in_residual_funds, \
+    trade_logic_ver, trade_start_run_date = \
+        list[0], list[1], list[2], list[3], list[4], list[5], list[6], \
+        list[7], list[8]
 
     if not date == trade_last_run_date: #trade保持のdateが異なる？
         #turn開始前にtrade idの3項目を更新。
         TBL_VAL.tbl_upd_trade_turn_start(ticker,date) 
 
-    #tradeのinitial_fund_idが空？ならfund_idを挿入
+    #tradeのinitial_fund_idが空？ならfund_id,dateを挿入
     if trade_initial_fund_id == None:
         TBL_VAL.tbl_upd_trade_ini_f_id(trade_id, trade_fund_id)
 
+    #tradeのstart_run_dateが空？ならdateを挿入
+    if trade_start_run_date == None:
+        TBL_VAL.tbl_upd_trade_start_run_date(trade_id, date)
 
 
     #Trade stageへ-------------------------
@@ -126,5 +131,15 @@ for r in df_wlist.index:
         else:
             print('end::::phase0_STAGE_A')
 
-print(f'end::::trade')
-    
+print(f'end::::trade loop')
+"""
+Create SCORE
+"""
+from modules.scr_sort_results_roi import *
+from modules.scr_sort_trade_freq import *
+from modules.scr_entry_bb_low import *
+from modules.scr_drop_warning import *
+from modules.scr_total import *
+
+
+print(f'end::::trade Create SCORE')    

@@ -16,9 +16,9 @@ from modules.variable import app_drange,app_rtype#,fdate,tdate
 
 import pandas as pd
 from sqlalchemy.sql import text
-import random
 import string
 import datetime
+import random
 
 #debugのためにtableを掃除
 
