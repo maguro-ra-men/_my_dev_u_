@@ -21,41 +21,23 @@ import datetime
 import random
 
 #debugのためにtableを掃除
-
-"""
-update
-"""
-#upd trade
-for i in range(1,6):#最後は1つ多くする。最後は無視される
-    trade_id=i
-    query=text(f'UPDATE trade \
-        SET initial_fund_id=null, phase="0", status="on", \
-            cnt_run_date=null, end_of_turn=null\
-        WHERE id={trade_id};')
-    session.execute(query)
-    session.commit()
-
-#upd fund
-for i in range(1,6):#最後は1つ多くする。最後は無視される
-    fund_id=i
-    query=text(f'UPDATE `fund` \
-        SET status_f="on", run_date_f=null\
-        WHERE id={fund_id};')
-    session.execute(query)
-    session.commit()
-
-
 """
 delete
 """
 #id指定系
 table='`trade`'
-query=text(f'DELETE FROM {table} where id >= 6;')
+query=text(f'DELETE FROM {table};')
+session.execute(query)
+session.commit()
+query=text(f'ALTER TABLE {table} auto_increment = 1;')
 session.execute(query)
 session.commit()
 
 table='`fund`'
-query=text(f'DELETE FROM {table} where id >= 6;')
+query=text(f'DELETE FROM {table};')
+session.execute(query)
+session.commit()
+query=text(f'ALTER TABLE {table} auto_increment = 1;')
 session.execute(query)
 session.commit()
 
@@ -64,9 +46,15 @@ table='`order`'
 query=text(f'DELETE FROM {table};')
 session.execute(query)
 session.commit()
+query=text(f'ALTER TABLE {table} auto_increment = 1;')
+session.execute(query)
+session.commit()
 
 table='`execution`'
 query=text(f'DELETE FROM {table};')
+session.execute(query)
+session.commit()
+query=text(f'ALTER TABLE {table} auto_increment = 1;')
 session.execute(query)
 session.commit()
 
@@ -74,4 +62,39 @@ table='`trade_results`'
 query=text(f'DELETE FROM {table};')
 session.execute(query)
 session.commit()
+query=text(f'ALTER TABLE {table} auto_increment = 1;')
+session.execute(query)
+session.commit()
+
+
+"""
+master tickersからticker取得
+"""
+query=f'select id, ticker\
+    from tickers\
+    order by id asc;'
+df = pd.read_sql_query(query, engine)
+
+"""
+create trade,fund
+"""
+for r in df.index:
+    ticker = df.loc[r,'ticker']
+    i = df.loc[r,'id']
+    #tbl_ins_trade
+    query=text(f'insert into `trade` (id, rtype, phase, status, \
+        ticker, logic_ver) \
+        values({i}, "simu",  "0", "on", \
+        "{ticker}", "1");')
+    session.execute(query)
+    session.commit()
+
+    #tbl_ins_fund
+    query=text(f'insert into `fund` (trade_id, rtype, \
+                ticker, status_f, residual_funds, update_diff_funds) \
+        values({i}, "simu", "{ticker}",  \
+        "on", 1000000, 0 );')
+    session.execute(query)
+    session.commit()
+
 

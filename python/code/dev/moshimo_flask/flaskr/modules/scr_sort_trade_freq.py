@@ -101,9 +101,9 @@ for r,ticker in enumerate(df.ticker):
     if scr_edit == 0 and cnt_run_date_avg <= (reference_value * 2.12):
         df.loc[r,'score']=2
         scr_edit = 1
-    if scr_edit == 0 and cnt_run_date_avg <= (reference_value * 2.26):
+    if scr_edit == 0 :
         df.loc[r,'score']=1
-        scr_edit = 1
+
 
 df = df.sort_values(['score'], ascending=False) #sort DESC
 
