@@ -142,8 +142,8 @@ df['date']=df['date'].dt.date
 df=df.assign(create_time=datetime.datetime.now()) #add create_date
 df=df.assign(a_ema20close=0,a_bb20ema=0,a_bb20high=0,a_bb20low=0,a_stdev_p=0) #add tech chart Multiple columns
 df = df.sort_values(['ticker','date'], ascending=False) #sort DESC
-df= df.reset_index() #add index（振り直し）
-df= df.drop(columns=['index'])  #元のindex列削除
+df= df.reset_index(drop=True) #add index（振り直し）旧index削除
+
 
 """
 Tech chart追加(stock)
