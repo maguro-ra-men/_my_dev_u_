@@ -50,6 +50,23 @@ if df_wlist.empty:
     logger.error(f'error:No valid trade and fund')
     sys.exit('error:')
 
+#ここからコピペかな wlistあればいける
+#用済みならこのpyは消す
+
+
+"""
+Tech chart追加(RSI)
+"""
+"""
+前工程でdfにstock pricesがある状態。
+元は降順だが、RSI判定の為、昇順に変更。
+【!!!】ソートは重要。複数tickでdate ascにした場合、dateぐちゃる。そうすると後工程で
+    レコード削除、unionがうまくできず、特定tickの数が減っていってしまう。
+    CWEB140件が5件になった（恐怖）
+    ticker,date asc にすべし
+"""
+df = df.sort_values(['ticker','date'], ascending=True) #sort trueがasc
+
 """
 tickerごとに処理。RSI等の指標を追加
 """
@@ -125,8 +142,7 @@ for r in df_wlist.index:
     #不要レコードをdfから削除
     rows_to_drop = dfraw.index[dfraw["ticker"] == ticker]#行を定義
     dfraw = dfraw.drop(rows_to_drop)#dfから定義した行を削除
-
-    #dfraw=dfraw.drop(f'ticker == "{ticker}"')
+    #最下部に追加
     dfraw=dfraw.append(df) #union
 
     #debug用
@@ -135,11 +151,11 @@ for r in df_wlist.index:
     #dfraw.to_csv(f'{rootpath}\\test.csv')             #テスト用　あとでけす
 
 """
-loop後
+loop後(RSI)
 """
 df = dfraw
+#データ整形
+df = df.sort_values(['ticker','date'], ascending=False) #sort DESC
+df= df.reset_index(drop=True) #add index（振り直し）旧index削除
 
 #df.to_csv(f'{rootpath}\\test.csv')             #テスト用　あとでけす
-
-#loop抜けた後、必要ならindex調整
-df= df.reset_index(drop=True) #add index（振り直し）旧index削除
